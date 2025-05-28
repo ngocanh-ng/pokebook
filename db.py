@@ -5,22 +5,31 @@ import os
 
 load_dotenv()
 
-def get_all_img_names():
+def connect_db():
     try:
         connection = mariadb.connect(
-            user = os.getenv("USER"),
-            password = os.getenv("PASSWORD"),
-            host = os.getenv("HOST"),
-            port = 3306,
-            database = "team02")
- 
+            user=os.getenv("LOCAL_USER"),
+            password=os.getenv("LOCAL_PASSWORD"),
+            host=os.getenv("LOCAL_HOST"),
+            port=3307,
+            database="team02"
+        )
+        return connection
     except mariadb.Error as e:
-        print(f"Error connecting to MariaDB PLatform: {e}")
+        print(f"Fehler beim Verbinden zur MariaDB: {e}")
         sys.exit(1)
-        
-    cursor = connection.cursor()
-    cursor.execute("SELECT Bildname FROM karte")
-    rows = cursor.fetchall()
-    return [row[0] for row in rows]
 
+def get_all_img_names():
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute("SELECT Bildname FROM karte")
+        rows = cur.fetchall()
+        return [row[0] for row in rows]
+    except mariadb.Error as e:
+        print(f"DB Fehler: {e}")
+        return []
+    finally:
+        cur.close()
+        conn.close()
 
