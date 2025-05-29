@@ -2,9 +2,9 @@ import tkinter as tk
 import ttkbootstrap as ttk
 import os
 from PIL import Image, ImageTk
-from db import get_all_img_names
+from db import get_all_img_names, get_user_img_names, get_filtered_img_names
 
-class PokeBookApp:
+class PokebookApp:
     def __init__(self, root, username, user_id):
         self.root = root
         self.username = username
@@ -12,31 +12,103 @@ class PokeBookApp:
         self.columns = 4
 
         self.root.title(f"Pokébook – {username}")
-        self.root.geometry("1465x900")
 
-        self.img_paths = self.get_img_paths()
+        # Fenstergröße und Position neu setzen
+        window_width = 1465
+        window_height = 900
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
+        # Grid-Konfiguration zurücksetzen
+        for i in range(3):
+            self.root.grid_columnconfigure(i, weight=0)
+        self.root.grid_columnconfigure(0, weight=0)
+        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_rowconfigure(0, weight=1)
+
+        self.all_img_paths = self.get_all_img_paths()
+        self.user_img_paths = self.get_user_img_paths()
+        self.only_user_cards = False
         self.setup_ui()
         
         # alle Karten beim öffnen anzeigen
         self.show_all_cards()
         self.all_cards_button.configure(bootstyle="secondary")
 
-    def get_img_paths(self):
+    def get_all_img_paths(self):
         base_path = os.getenv("PATH_ANH")
-        img_names = get_all_img_names()
-        return [os.path.join(base_path, name) for name in img_names] 
+        all_img_names = get_all_img_names()
+        return [os.path.join(base_path, name) for name in all_img_names]
+
+    def get_user_img_paths(self):
+        base_path = os.getenv("PATH_ANH")
+        user_img_names = get_user_img_names(self.user_id)
+        return [os.path.join(base_path, name) for name in user_img_names]
     
     def change_button_colour(self, clicked_button, other_button):
         clicked_button.configure(bootstyle="secondary")
         other_button.configure(bootstyle="secondary.Outline.TButton")
 
-    def show_all_cards(self,):
+    def show_all_cards(self):
         self.clear_grid()
-        for index, path in enumerate(self.img_paths):
+        self.only_user_cards = False
+        for index, path in enumerate(self.all_img_paths):
             try:
                 img = Image.open(path)
                 img = img.resize((276, 390))
                 photo = ImageTk.PhotoImage(img)
+                label = ttk.Label(self.scrollable_frame, image=photo)
+                label.image = photo
+                row = index // self.columns
+                col = index % self.columns
+                label.grid(row=row, column=col, padx=5, pady=5)
+            except Exception as e:
+                print(f"Fehler bei {path}: {e}")
+    
+    def show_user_cards(self):
+        self.clear_grid()
+        self.only_user_cards = True
+        for index, path in enumerate(self.user_img_paths):
+            try:
+                img = Image.open(path)
+                img = img.resize((276, 390))
+                photo = ImageTk.PhotoImage(img)
+                label = ttk.Label(self.scrollable_frame, image=photo)
+                label.image = photo
+                row = index // self.columns
+                col = index % self.columns
+                label.grid(row=row, column=col, padx=5, pady=5)
+            except Exception as e:
+                print(f"Fehler bei {path}: {e}")
+    
+    def filter_cards(self, only_user_cards=False):
+        typ = self.type_combobox.get()
+        rarity = self.rarity_combobox.get()
+        pack = self.pack_combobox.get()
+
+        # Mapping von Namen zu Index
+        typ = self.type_map.get(typ) if typ else None
+        rarity = self.rarity_map.get(rarity) if rarity else None
+        pack = self.pack_map.get(pack) if pack else None
+
+        if only_user_cards:
+            img_names = get_filtered_img_names(user_id=self.user_id, typ=typ, rarity=rarity, pack=pack, only_user_cards=True)
+        else:
+            img_names = get_filtered_img_names(typ=typ, rarity=rarity, pack=pack, only_user_cards=False)
+        base_path = os.getenv("PATH_ANH")
+        filtered_paths = [os.path.join(base_path, name) for name in img_names]
+
+        self.clear_grid()
+        self.card_images = []
+        for index, path in enumerate(filtered_paths):
+            try:
+                img = Image.open(path)
+                img = img.resize((276, 390))
+                photo = ImageTk.PhotoImage(img)
+                self.card_images.append(photo)
                 label = ttk.Label(self.scrollable_frame, image=photo)
                 label.image = photo
                 row = index // self.columns
@@ -69,7 +141,7 @@ class PokeBookApp:
             text="Meine Karten", 
             bootstyle="secondary.Outline.TButton", 
             width=10,
-            command=lambda:[self.change_button_colour(self.my_cards_button, self.all_cards_button)])
+            command=lambda:[self.show_user_cards(), self.change_button_colour(self.my_cards_button, self.all_cards_button)])
         self.my_cards_button.grid(row=0, column=1)
 
         # Suche 
@@ -89,28 +161,39 @@ class PokeBookApp:
         # Typ Combobox
         self.type_label = ttk.Label(self.menu_frame, text="Typ:", bootstyle="secondary", font=("Helvetica", 14))
         self.type_label.grid(row=4, column=0, columnspan=2, sticky="w")
-        self.type_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["Feuer", "Wasser", "Pflanze", "Elektro", "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"])
+        self.type_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["","Pflanze", "Feuer", "Wasser", "Elektro", "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"])
         self.type_combobox.grid(row=5, column=0, columnspan=2, pady=(5,10))
+        self.type_map = {"Pflanze": 1, "Feuer": 2, "Wasser": 3, "Elektro": 4, "Psycho": 5, "Kampf": 6, "Finsternis": 7, "Metall": 8, "Fee": 9, "Drache": 10, "Farblos": 11}
 
         # Seltenheit Combobox
         self.rarity_label = ttk.Label(self.menu_frame, text="Seltenheit:", bootstyle="secondary", font=("Helvetica", 14))
         self.rarity_label.grid(row=6, column=0, columnspan=2, sticky="w")
-        self.rarity_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["Common", "Uncommon", "Rare", "Double Rare", "Ultra Rare", "Art Rare", "Special Art Rare", "Secret Rare"])
+        self.rarity_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Common", "Uncommon", "Rare", "Double Rare", "Ultra Rare", "Art Rare", "Special Art Rare", "Secret Rare"])
         self.rarity_combobox.grid(row=7, column=0, columnspan=2, pady=(5,10))
+        self.rarity_map = {"Common": 1, "Uncommon": 2, "Rare": 3, "Double Rare": 4, "Ultra Rare": 5, "Art Rare": 6, "Special Art Rare": 7, "Secret Rare": 8}
 
-        # Serie Combobox
-        self.set_label = ttk.Label(self.menu_frame, text="Serie:",bootstyle="secondary", font=("Helvetica", 14))
-        self.set_label.grid(row=8, column=0, columnspan=2, sticky="w")
-        self.set_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["Sonnen & Mond Zyklus", "Karmesin & Purpur Zyklus"])
-        self.set_combobox.grid(row=9, column=0, columnspan=2, pady=(5,10))
+        # Päckchen Combobox
+        self.pack_label = ttk.Label(self.menu_frame, text="Päckchen:",bootstyle="secondary", font=("Helvetica", 14))
+        self.pack_label.grid(row=8, column=0, columnspan=2, sticky="w")
+        self.pack_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Sonnen & Mond Zyklus", "Karmesin & Purpur Zyklus"])
+        self.pack_combobox.grid(row=9, column=0, columnspan=2, pady=(5,10))
+        self.pack_map = {"Sonnen & Mond Zyklus": 1, "Karmesin & Purpur Zyklus": 2}
 
         # Filtern Button
-        self.filter_button = ttk.Button(self.menu_frame, text="Filtern", bootstyle="secondary")
-        self.filter_button.grid(row=10, column=0, columnspan=2, pady=10)
+        self.filter_button = ttk.Button(self.menu_frame, text="Filtern", bootstyle="secondary", width=8, command=lambda: self.filter_cards(only_user_cards = self.only_user_cards))
+        self.filter_button.grid(row=10, column=0, padx=5, pady=10, sticky="e")
+
+        # Reset Button
+        self.reset_button = ttk.Button(self.menu_frame, text="Reset", width=8, bootstyle="secondary")
+        self.reset_button.grid(row=10, column=1, padx=5, pady=10, sticky="w")
 
         # Grid Frame 
         self.grid_frame = ttk.Frame(self.root)
         self.grid_frame.grid(row=0, column=1, sticky="nsew", padx=(5, 10), pady=10)
+
+        # Container für Canvas
+        self.container = ttk.Frame(self.root)
+        self.container.grid(row=0, column=1, sticky="nsew", padx=(5, 10), pady=10)
 
         # Grid Frame ausdehnen
         self.root.columnconfigure(1, weight=1)
@@ -138,7 +221,7 @@ class PokeBookApp:
         self.scrollable_frame.columnconfigure(tuple(range(self.columns)), weight=1)
 
 # Test
-root = ttk.Window(themename="minty")
-PokeBookApp(root, "1", 1)
+'''root = ttk.Window(themename="minty")
+PokebookApp(root, "1", 1)
 root.mainloop()
-
+'''
