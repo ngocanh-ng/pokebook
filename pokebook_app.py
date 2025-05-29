@@ -32,6 +32,7 @@ class PokebookApp:
         self.all_img_paths = self.get_all_img_paths()
         self.user_img_paths = self.get_user_img_paths()
         self.only_user_cards = False
+        self.showing_user_cards = False
         self.setup_ui()
         
         # alle Karten beim öffnen anzeigen
@@ -55,6 +56,7 @@ class PokebookApp:
     def show_all_cards(self):
         self.clear_grid()
         self.only_user_cards = False
+        self.showing_user_cards = False
         for index, path in enumerate(self.all_img_paths):
             try:
                 img = Image.open(path)
@@ -71,6 +73,7 @@ class PokebookApp:
     def show_user_cards(self):
         self.clear_grid()
         self.only_user_cards = True
+        self.showing_user_cards = True
         for index, path in enumerate(self.user_img_paths):
             try:
                 img = Image.open(path)
@@ -116,6 +119,18 @@ class PokebookApp:
                 label.grid(row=row, column=col, padx=5, pady=5)
             except Exception as e:
                 print(f"Fehler bei {path}: {e}")
+
+    def reset_button(self):
+        self.type_combobox.set("")
+        self.rarity_combobox.set("")
+        self.pack_combobox.set("")
+        
+        self.name_entry.delete(0, tk.END)
+
+        if self.showing_user_cards:
+            self.show_user_cards()
+        else:
+            self.show_all_cards()
 
     def clear_grid(self):
         for widget in self.scrollable_frame.winfo_children():
@@ -184,7 +199,7 @@ class PokebookApp:
         self.filter_button.grid(row=10, column=0, padx=5, pady=10, sticky="e")
 
         # Reset Button
-        self.reset_button = ttk.Button(self.menu_frame, text="Reset", width=8, bootstyle="secondary")
+        self.reset_button = ttk.Button(self.menu_frame, text="Reset", width=8, bootstyle="secondary", command=self.reset_button)
         self.reset_button.grid(row=10, column=1, padx=5, pady=10, sticky="w")
 
         # Grid Frame 
@@ -221,7 +236,6 @@ class PokebookApp:
         self.scrollable_frame.columnconfigure(tuple(range(self.columns)), weight=1)
 
 # Test
-'''root = ttk.Window(themename="minty")
+root = ttk.Window(themename="minty")
 PokebookApp(root, "1", 1)
 root.mainloop()
-'''
