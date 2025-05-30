@@ -162,6 +162,12 @@ class PokebookApp:
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
+    def _on_mousewheel(self, event):
+        if event.num == 4 or event.delta > 0:
+            self.canvas.yview_scroll(-1, "units")
+        elif event.num == 5 or event.delta < 0:
+            self.canvas.yview_scroll(1, "units")
+
     def setup_ui(self):
         # Menü-Frame
         self.menu_frame = ttk.Frame(self.root, borderwidth=10, relief = tk.GROOVE)
@@ -260,6 +266,10 @@ class PokebookApp:
 
         # Alle Spalten im scrollable_frame gleichmäßig verteilen
         self.scrollable_frame.columnconfigure(tuple(range(self.columns)), weight=1)
+
+        # Mousewheel-Scrolling über das Canvas aktivieren
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel) 
+
 
 # Test
 root = ttk.Window(themename="minty")
