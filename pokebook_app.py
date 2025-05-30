@@ -32,7 +32,6 @@ class PokebookApp:
         self.all_img_paths = self.get_all_img_paths()
         self.user_img_paths = self.get_user_img_paths()
         self.only_user_cards = False
-        self.showing_user_cards = False
         self.setup_ui()
         
         # alle Karten beim öffnen anzeigen
@@ -40,12 +39,12 @@ class PokebookApp:
         self.all_cards_button.configure(bootstyle="secondary")
 
     def get_all_img_paths(self):
-        base_path = os.getenv("PATH_ANH")
+        base_path = os.getenv("PATH_ALL_CARDS")
         all_img_names = get_all_img_names()
         return [os.path.join(base_path, name) for name in all_img_names]
 
     def get_user_img_paths(self):
-        base_path = os.getenv("PATH_ANH")
+        base_path = os.getenv("PATH_ALL_CARDS")
         user_img_names = get_user_img_names(self.user_id)
         return [os.path.join(base_path, name) for name in user_img_names]
     
@@ -56,7 +55,6 @@ class PokebookApp:
     def show_all_cards(self):
         self.clear_grid()
         self.only_user_cards = False
-        self.showing_user_cards = False
         for index, path in enumerate(self.all_img_paths):
             try:
                 img = Image.open(path)
@@ -73,7 +71,6 @@ class PokebookApp:
     def show_user_cards(self):
         self.clear_grid()
         self.only_user_cards = True
-        self.showing_user_cards = True
         for index, path in enumerate(self.user_img_paths):
             try:
                 img = Image.open(path)
@@ -101,7 +98,7 @@ class PokebookApp:
             img_names = get_filtered_img_names(user_id=self.user_id, typ=typ, rarity=rarity, pack=pack, only_user_cards=True)
         else:
             img_names = get_filtered_img_names(typ=typ, rarity=rarity, pack=pack, only_user_cards=False)
-        base_path = os.getenv("PATH_ANH")
+        base_path = os.getenv("PATH_ALL_CARDS")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
 
         self.clear_grid()
@@ -127,10 +124,39 @@ class PokebookApp:
         
         self.name_entry.delete(0, tk.END)
 
-        if self.showing_user_cards:
+        if self.only_user_cards:
             self.show_user_cards()
         else:
             self.show_all_cards()
+
+    def search_by_name(self):
+        name = self.name_entry.get().strip()
+        if not name:
+            return 
+        if self.only_user_cards:
+            img_names = get_filtered_img_names(user_id=self.user_id, typ=None, rarity=None, pack=None, only_user_cards=True)
+        else:
+            img_names = get_filtered_img_names(typ=None, rarity=None, pack=None, only_user_cards=False)
+
+        img_names = [n for n in img_names if name in n.lower()]
+        base_path = os.getenv("PATH_ALL_CARDS")
+        filtered_paths = [os.path.join(base_path, n) for n in img_names]
+
+        self.clear_grid()
+        self.card_images = []
+        for index, path in enumerate(filtered_paths):
+            try:
+                img = Image.open(path)
+                img = img.resize((276, 390))
+                photo = ImageTk.PhotoImage(img)
+                self.card_images.append(photo)
+                label = ttk.Label(self.scrollable_frame, image=photo)
+                label.image = photo
+                row = index // self.columns
+                col = index % self.columns
+                label.grid(row=row, column=col, padx=5, pady=5)
+            except Exception as e:
+                print(f"Fehler bei {path}: {e}")
 
     def clear_grid(self):
         for widget in self.scrollable_frame.winfo_children():
@@ -166,7 +192,7 @@ class PokebookApp:
         self.name_entry = ttk.Entry(self.menu_frame, bootstyle="secondary")
         self.name_entry.grid(row=2, column=0, columnspan=2, sticky="nsw")
 
-        self.search_button = ttk.Button(self.menu_frame, text="OK", bootstyle="secondary")
+        self.search_button = ttk.Button(self.menu_frame, text="OK", bootstyle="secondary", command=self.search_by_name)
         self.search_button.grid(row=2, column=1, sticky="e")
 
         # Filter
