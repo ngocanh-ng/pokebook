@@ -37,7 +37,7 @@ class PokebookApp:
         # alle Karten beim öffnen anzeigen
         self.show_all_cards()
         self.all_cards_button.configure(bootstyle="secondary")
-
+    
     def get_all_img_paths(self):
         base_path = os.getenv("PATH_ALL_CARDS")
         all_img_names = get_all_img_names()
@@ -67,6 +67,8 @@ class PokebookApp:
                 label.grid(row=row, column=col, padx=5, pady=5)
             except Exception as e:
                 print(f"Fehler bei {path}: {e}")
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(0)
     
     def show_user_cards(self):
         self.clear_grid()
@@ -83,6 +85,8 @@ class PokebookApp:
                 label.grid(row=row, column=col, padx=5, pady=5)
             except Exception as e:
                 print(f"Fehler bei {path}: {e}")
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(0)
     
     def filter_cards(self, only_user_cards=False):
         typ = self.type_combobox.get()
@@ -95,9 +99,9 @@ class PokebookApp:
         pack = self.pack_map.get(pack) if pack else None
 
         if only_user_cards:
-            img_names = get_filtered_img_names(user_id=self.user_id, typ=typ, rarity=rarity, pack=pack, only_user_cards=True)
+            img_names = get_filtered_img_names(user_id=self.user_id, name=None, typ=typ, rarity=rarity, pack=pack, only_user_cards=True)
         else:
-            img_names = get_filtered_img_names(typ=typ, rarity=rarity, pack=pack, only_user_cards=False)
+            img_names = get_filtered_img_names(name=None, typ=typ, rarity=rarity, pack=pack, only_user_cards=False)
         base_path = os.getenv("PATH_ALL_CARDS")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
 
@@ -116,6 +120,9 @@ class PokebookApp:
                 label.grid(row=row, column=col, padx=5, pady=5)
             except Exception as e:
                 print(f"Fehler bei {path}: {e}")
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(0)
+        
 
     def reset_button(self):
         self.type_combobox.set("")
@@ -128,6 +135,8 @@ class PokebookApp:
             self.show_user_cards()
         else:
             self.show_all_cards()
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(0)
 
     def search_by_name(self):
         name = self.name_entry.get().strip()
@@ -157,7 +166,9 @@ class PokebookApp:
                 label.grid(row=row, column=col, padx=5, pady=5)
             except Exception as e:
                 print(f"Fehler bei {path}: {e}")
-
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(0)
+        
     def clear_grid(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
@@ -168,6 +179,11 @@ class PokebookApp:
         elif event.num == 5 or event.delta < 0:
             self.canvas.yview_scroll(1, "units")
 
+    def update_scrollregion(self, event):
+        bbox = self.canvas.bbox("all")
+        if bbox:
+            self.canvas.configure(scrollregion=(0, 0, bbox[2], max(bbox[3], self.canvas.winfo_height())))
+            
     def setup_ui(self):
         # Menü-Frame
         self.menu_frame = ttk.Frame(self.root, borderwidth=10, relief = tk.GROOVE)
@@ -259,7 +275,7 @@ class PokebookApp:
 
         # Scrollable Frame 
         self.scrollable_frame = ttk.Frame(self.canvas)
-        self.scrollable_frame.bind("<Configure>",lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))) # Aktualisiert den Scrollbereich des Canvas, wenn sich der Inhalt von scrollable_frame ändert.
+        self.scrollable_frame.bind("<Configure>", self.update_scrollregion)
 
         # Scrollable Frame oben links im Canvas platzieren
         self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
