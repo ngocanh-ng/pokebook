@@ -47,7 +47,7 @@ def get_user_img_names(user_id):
         cur.close()
         conn.close()
 
-def get_filtered_img_names(user_id = None, name=None, typ = None, rarity = None, pack = None, only_user_cards = False):
+def get_filtered_img_names(user_id = None, name=None, typ = None, rarity = None, pack = None, only_user_cards = False, sort_by = None):
     try: 
         conn = connect_db()
         cur = conn.cursor()
@@ -72,11 +72,19 @@ def get_filtered_img_names(user_id = None, name=None, typ = None, rarity = None,
             query += " AND karte.Name LIKE %s"
             params.append(f"%{name}%")
 
-        query += " ORDER BY Bildname"
+        sort_field_map = {
+        "Name": "karte.Name",
+        "Typ": "karte.Typ",
+        "Seltenheit": "karte.Seltenheit",
+        "Päckchen": "karte.Paeckchen"
+        }
+
+        if sort_by in sort_field_map:
+            query += f" ORDER BY {sort_field_map[sort_by]} ASC"
 
         cur.execute(query, tuple(params))
         return [row[0] for row in cur.fetchall()]
-    
+
     except mariadb.Error as e:
         print(f"DB Fehler: {e}")
         return []
