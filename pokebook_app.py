@@ -81,10 +81,12 @@ class PokebookApp:
     def show_all_cards(self):
         self.only_user_cards = False
         self.display_images(self.all_img_paths)
+        self.update_card_counter()
         
     def show_user_cards(self):
         self.only_user_cards = True
         self.display_images(self.user_img_paths)
+        self.update_card_counter()
     
     def filter_cards(self, only_user_cards=False):
         typ = self.type_combobox.get()
@@ -108,6 +110,10 @@ class PokebookApp:
         base_path = os.getenv("PATH_ALL_CARDS")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
         self.display_images(filtered_paths)
+
+        self.display_images(filtered_paths)
+        self.update_card_counter(total=len(filtered_paths))
+
 
     def reset_filters(self):
         self.type_combobox.set("")
@@ -164,6 +170,12 @@ class PokebookApp:
         if self.name_filter_after_id:
             self.root.after_cancel(self.name_filter_after_id)
         self.name_filter_after_id = self.root.after(300, lambda: self.filter_cards(self.only_user_cards))
+
+    def update_card_counter(self, total=None):
+        total_cards = total if total is not None else len(self.all_img_paths)
+        user_cards = len(self.user_img_paths)
+        self.counter_label.configure(text=f"{total_cards} Karten insgesamt, {user_cards} in Sammlung")
+
 
     def setup_ui(self):
         # Menü-Frame
@@ -242,6 +254,10 @@ class PokebookApp:
         # Reset Button
         self.reset_button = ttk.Button(self.menu_frame, text="Reset", width=8, bootstyle="secondary", command=self.reset_filters)
         self.reset_button.grid(row=12, column=0, columnspan=2, padx=5, pady=10)
+
+        # Karten-Zähler
+        self.counter_label = ttk.Label(self.menu_frame, text="", bootstyle="secondary", font=("Helvetica", 12))
+        self.counter_label.grid(row=13, column=0, columnspan=2, pady=(10, 0))
 
         # Container für Canvas
         self.container = ttk.Frame(self.root)
