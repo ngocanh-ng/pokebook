@@ -178,6 +178,18 @@ class PokebookApp:
 
 
     def setup_ui(self):
+        # Menüleister
+        menubar = ttk.Menu(self.root)
+        # Datei-Menü
+        file_menu = tk.Menu(menubar, tearoff=0)
+        file_menu.add_command(label="Exportieren")
+        file_menu.add_separator()
+        file_menu.add_command(label="Logout")
+        menubar.add_cascade(label="Datei", menu=file_menu)
+
+        # Menüleiste setzen
+        self.root.config(menu=menubar)
+
         # Menü-Frame
         self.menu_frame = ttk.Frame(self.root, borderwidth=10, relief = tk.GROOVE)
         self.menu_frame.grid(row=0, column=0, sticky="n", padx=(15,5))
@@ -201,7 +213,7 @@ class PokebookApp:
         self.my_cards_button.grid(row=0, column=1)
 
         # Sortierung
-        self.sort_label = ttk.Label(self.menu_frame, text="Sortieren nach:", bootstyle="secondary", font=("Helvetica bold", 15))
+        self.sort_label = ttk.Label(self.menu_frame, text="Sortieren nach:", bootstyle="secondary", font=("Arial bold", 15))
         self.sort_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=(20,5))
         
         self.sort_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Name", "Typ", "Seltenheit", "Pack"])
@@ -209,11 +221,11 @@ class PokebookApp:
         self.sort_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
 
         # Filter 
-        self.filter_label = ttk.Label(self.menu_frame, text="Filter", bootstyle="secondary", font=("Helvetica bold", 15))
+        self.filter_label = ttk.Label(self.menu_frame, text="Filter", bootstyle="secondary", font=("Arial bold", 15))
         self.filter_label.grid(row=3, column=0, columnspan=2, sticky="w", pady=(10,8))
 
         # Name
-        self.name_label = ttk.Label(self.menu_frame, text="Name:", bootstyle="secondary", font=("Helvetica", 14))
+        self.name_label = ttk.Label(self.menu_frame, text="Name:", bootstyle="secondary", font=("Arial", 14))
         self.name_label.grid(row=4, column=0, columnspan=2, sticky="w")
 
         self.name_entry = ttk.Entry(self.menu_frame, bootstyle="secondary")
@@ -221,7 +233,7 @@ class PokebookApp:
         self.name_entry.bind("<KeyRelease>", self.schedule_name_filter)
 
         # Typ Combobox
-        self.type_label = ttk.Label(self.menu_frame, text="Typ:", bootstyle="secondary", font=("Helvetica", 14))
+        self.type_label = ttk.Label(self.menu_frame, text="Typ:", bootstyle="secondary", font=("Arial", 14))
         self.type_label.grid(row=6, column=0, columnspan=2, sticky="w")
 
         self.type_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["","Pflanze", "Feuer", "Wasser", "Elektro", 
@@ -232,7 +244,7 @@ class PokebookApp:
         self.type_map = {"Pflanze": 1, "Feuer": 2, "Wasser": 3, "Elektro": 4, "Psycho": 5, "Kampf": 6, "Finsternis": 7, "Metall": 8, "Fee": 9, "Drache": 10, "Farblos": 11}
 
         # Seltenheit Combobox
-        self.rarity_label = ttk.Label(self.menu_frame, text="Seltenheit:", bootstyle="secondary", font=("Helvetica", 14))
+        self.rarity_label = ttk.Label(self.menu_frame, text="Seltenheit:", bootstyle="secondary", font=("Arial", 14))
         self.rarity_label.grid(row=8, column=0, columnspan=2, sticky="w")
 
         self.rarity_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Common", "Uncommon", "Rare", "Double Rare", "Ultra Rare", "Art Rare", "Special Art Rare", "Secret Rare"])
@@ -242,7 +254,7 @@ class PokebookApp:
         self.rarity_map = {"Common": 1, "Uncommon": 2, "Rare": 3, "Double Rare": 4, "Ultra Rare": 5, "Art Rare": 6, "Special Art Rare": 7, "Secret Rare": 8}
 
         # Päckchen Combobox
-        self.pack_label = ttk.Label(self.menu_frame, text="Päckchen:",bootstyle="secondary", font=("Helvetica", 14))
+        self.pack_label = ttk.Label(self.menu_frame, text="Päckchen:",bootstyle="secondary", font=("Arial", 14))
         self.pack_label.grid(row=10, column=0, columnspan=2, sticky="w")
 
         self.pack_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Sonnen & Mond Zyklus", "Karmesin & Purpur Zyklus"])
@@ -256,7 +268,7 @@ class PokebookApp:
         self.reset_button.grid(row=12, column=0, columnspan=2, padx=5, pady=10)
 
         # Karten-Zähler
-        self.counter_label = ttk.Label(self.menu_frame, text="", bootstyle="secondary", font=("Helvetica", 12))
+        self.counter_label = ttk.Label(self.menu_frame, text="", bootstyle="secondary", font=("Arial", 13))
         self.counter_label.grid(row=13, column=0, columnspan=2, pady=(10, 0))
 
         # Container für Canvas
@@ -274,7 +286,7 @@ class PokebookApp:
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
         # Scrollbar
-        self.scrollbar = ttk.Scrollbar(self.container, orient="vertical", command=self.canvas.yview)
+        self.scrollbar = ttk.Scrollbar(self.container, bootstyle="secondary-round", orient="vertical", command=self.canvas.yview)
         self.scrollbar.grid(row=0, column=1, sticky="ns")
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
