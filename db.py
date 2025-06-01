@@ -23,7 +23,7 @@ def get_all_img_names():
     try:
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute("SELECT Bildname FROM karte")
+        cur.execute("SELECT Bildname FROM karte ORDER BY Bildname")
         rows = cur.fetchall()
         return [row[0] for row in rows]
     except mariadb.Error as e:
@@ -37,7 +37,7 @@ def get_user_img_names(user_id):
     try:
         conn = connect_db()
         cur = conn.cursor()
-        cur.execute("SELECT karte.Bildname FROM zuordnung_benutzer_karte INNER JOIN benutzer ON zuordnung_benutzer_karte.Benutzer = benutzer.BenutzerID INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID WHERE benutzer = %s", (user_id,))
+        cur.execute("SELECT karte.Bildname FROM zuordnung_benutzer_karte INNER JOIN benutzer ON zuordnung_benutzer_karte.Benutzer = benutzer.BenutzerID INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID WHERE benutzer = %s ORDER BY Bildname", (user_id,))
         rows = cur.fetchall()
         return [row[0] for row in rows]
     except mariadb.Error as e:
@@ -71,6 +71,8 @@ def get_filtered_img_names(user_id = None, name=None, typ = None, rarity = None,
         if name:
             query += " AND karte.Name LIKE %s"
             params.append(f"%{name}%")
+
+        query += " ORDER BY Bildname"
 
         cur.execute(query, tuple(params))
         return [row[0] for row in cur.fetchall()]

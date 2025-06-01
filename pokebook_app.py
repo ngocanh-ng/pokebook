@@ -13,7 +13,7 @@ class PokebookApp:
 
         self.root.title(f"Pokébook – {username}")
 
-        # Fenstergröße und Position neu setzen
+        # Fenstergröße und Position
         window_width = 1465
         window_height = 900
         screen_width = self.root.winfo_screenwidth()
@@ -92,6 +92,7 @@ class PokebookApp:
         typ = self.type_combobox.get()
         rarity = self.rarity_combobox.get()
         pack = self.pack_combobox.get()
+        name = self.name_entry.get()
 
         # Mapping von Namen zu Index
         typ = self.type_map.get(typ) if typ else None
@@ -99,9 +100,9 @@ class PokebookApp:
         pack = self.pack_map.get(pack) if pack else None
 
         if only_user_cards:
-            img_names = get_filtered_img_names(user_id=self.user_id, name=None, typ=typ, rarity=rarity, pack=pack, only_user_cards=True)
+            img_names = get_filtered_img_names(user_id=self.user_id, name=name, typ=typ, rarity=rarity, pack=pack, only_user_cards=True)
         else:
-            img_names = get_filtered_img_names(name=None, typ=typ, rarity=rarity, pack=pack, only_user_cards=False)
+            img_names = get_filtered_img_names(name=name, typ=typ, rarity=rarity, pack=pack, only_user_cards=False)
         base_path = os.getenv("PATH_ALL_CARDS")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
 
@@ -138,37 +139,6 @@ class PokebookApp:
         self.canvas.update_idletasks()
         self.canvas.yview_moveto(0)
 
-    def search_by_name(self):
-        name = self.name_entry.get().strip()
-        if not name:
-            return 
-        if self.only_user_cards:
-            img_names = get_filtered_img_names(user_id=self.user_id, typ=None, rarity=None, pack=None, only_user_cards=True)
-        else:
-            img_names = get_filtered_img_names(typ=None, rarity=None, pack=None, only_user_cards=False)
-
-        img_names = [n for n in img_names if name in n.lower()]
-        base_path = os.getenv("PATH_ALL_CARDS")
-        filtered_paths = [os.path.join(base_path, n) for n in img_names]
-
-        self.clear_grid()
-        self.card_images = []
-        for index, path in enumerate(filtered_paths):
-            try:
-                img = Image.open(path)
-                img = img.resize((276, 390))
-                photo = ImageTk.PhotoImage(img)
-                self.card_images.append(photo)
-                label = ttk.Label(self.scrollable_frame, image=photo)
-                label.image = photo
-                row = index // self.columns
-                col = index % self.columns
-                label.grid(row=row, column=col, padx=5, pady=5)
-            except Exception as e:
-                print(f"Fehler bei {path}: {e}")
-        self.canvas.update_idletasks()
-        self.canvas.yview_moveto(0)
-        
     def clear_grid(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
@@ -183,7 +153,7 @@ class PokebookApp:
         bbox = self.canvas.bbox("all")
         if bbox:
             self.canvas.configure(scrollregion=(0, 0, bbox[2], max(bbox[3], self.canvas.winfo_height())))
-            
+
     def setup_ui(self):
         # Menü-Frame
         self.menu_frame = ttk.Frame(self.root, borderwidth=10, relief = tk.GROOVE)
@@ -201,36 +171,35 @@ class PokebookApp:
         # Meine Karten Button
         self.my_cards_button = ttk.Button(
             self.menu_frame, 
-            text="Meine Karten", 
-            bootstyle="secondary.Outline.TButton", 
+            text="Meine Karten",
             width=10,
             command=lambda:[self.show_user_cards(), self.change_button_colour(self.my_cards_button, self.all_cards_button)])
         self.my_cards_button.grid(row=0, column=1)
 
-        # Suche 
-        self.search_label = ttk.Label(self.menu_frame, text="Suche nach Namen:", bootstyle="secondary", font=("Helvetica bold", 14))
-        self.search_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=(20,8))
+        # Filter 
+        self.filter_label = ttk.Label(self.menu_frame, text="Filter", bootstyle="secondary", font=("Helvetica bold", 15))
+        self.filter_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=(20,8))
+
+        self.name_label = ttk.Label(self.menu_frame, text="Name:", bootstyle="secondary", font=("Helvetica", 14))
+        self.name_label.grid(row=2, column=0, columnspan=2, sticky="w")
 
         self.name_entry = ttk.Entry(self.menu_frame, bootstyle="secondary")
-        self.name_entry.grid(row=2, column=0, columnspan=2, sticky="nsw")
-
-        self.search_button = ttk.Button(self.menu_frame, text="OK", bootstyle="secondary", command=self.search_by_name)
-        self.search_button.grid(row=2, column=1, sticky="e")
-
-        # Filter
-        self.filter_label = ttk.Label(self.menu_frame, text="Filter:", bootstyle="secondary", font=("Helvetica bold", 14))
-        self.filter_label.grid(row=3, column=0, columnspan=2, sticky="w", pady=(20,10))
+        self.name_entry.grid(row=3, column=0, columnspan=2, padx=10, pady=(5,10), sticky="ew")
+        self.name_entry.bind("<Return>", lambda event: self.search_by_name())
 
         # Typ Combobox
         self.type_label = ttk.Label(self.menu_frame, text="Typ:", bootstyle="secondary", font=("Helvetica", 14))
         self.type_label.grid(row=4, column=0, columnspan=2, sticky="w")
-        self.type_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["","Pflanze", "Feuer", "Wasser", "Elektro", "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"])
+
+        self.type_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["","Pflanze", "Feuer", "Wasser", "Elektro", 
+        "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"])
         self.type_combobox.grid(row=5, column=0, columnspan=2, pady=(5,10))
         self.type_map = {"Pflanze": 1, "Feuer": 2, "Wasser": 3, "Elektro": 4, "Psycho": 5, "Kampf": 6, "Finsternis": 7, "Metall": 8, "Fee": 9, "Drache": 10, "Farblos": 11}
 
         # Seltenheit Combobox
         self.rarity_label = ttk.Label(self.menu_frame, text="Seltenheit:", bootstyle="secondary", font=("Helvetica", 14))
         self.rarity_label.grid(row=6, column=0, columnspan=2, sticky="w")
+
         self.rarity_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Common", "Uncommon", "Rare", "Double Rare", "Ultra Rare", "Art Rare", "Special Art Rare", "Secret Rare"])
         self.rarity_combobox.grid(row=7, column=0, columnspan=2, pady=(5,10))
         self.rarity_map = {"Common": 1, "Uncommon": 2, "Rare": 3, "Double Rare": 4, "Ultra Rare": 5, "Art Rare": 6, "Special Art Rare": 7, "Secret Rare": 8}
@@ -238,6 +207,7 @@ class PokebookApp:
         # Päckchen Combobox
         self.pack_label = ttk.Label(self.menu_frame, text="Päckchen:",bootstyle="secondary", font=("Helvetica", 14))
         self.pack_label.grid(row=8, column=0, columnspan=2, sticky="w")
+
         self.pack_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Sonnen & Mond Zyklus", "Karmesin & Purpur Zyklus"])
         self.pack_combobox.grid(row=9, column=0, columnspan=2, pady=(5,10))
         self.pack_map = {"Sonnen & Mond Zyklus": 1, "Karmesin & Purpur Zyklus": 2}
