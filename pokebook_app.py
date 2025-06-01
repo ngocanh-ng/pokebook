@@ -52,41 +52,33 @@ class PokebookApp:
         clicked_button.configure(bootstyle="secondary")
         other_button.configure(bootstyle="secondary.Outline.TButton")
 
+    def display_images(self, image_paths):
+        self.clear_grid()
+        self.card_images = []
+        CARD_WIDTH = 276
+        CARD_HEIGHT = 390
+        for index, path in enumerate(image_paths):
+            try:
+                img = Image.open(path)
+                img = img.resize((CARD_WIDTH, CARD_HEIGHT))
+                photo = ImageTk.PhotoImage(img)
+                label = ttk.Label(self.scrollable_frame, image=photo)
+                label.image = photo
+                row = index // self.columns
+                col = index % self.columns
+                label.grid(row=row, column=col, padx=5, pady=5)
+            except Exception as e:
+                print(f"Fehler bei {path}: {e}")
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(0)
+        
     def show_all_cards(self):
-        self.clear_grid()
         self.only_user_cards = False
-        for index, path in enumerate(self.all_img_paths):
-            try:
-                img = Image.open(path)
-                img = img.resize((276, 390))
-                photo = ImageTk.PhotoImage(img)
-                label = ttk.Label(self.scrollable_frame, image=photo)
-                label.image = photo
-                row = index // self.columns
-                col = index % self.columns
-                label.grid(row=row, column=col, padx=5, pady=5)
-            except Exception as e:
-                print(f"Fehler bei {path}: {e}")
-        self.canvas.update_idletasks()
-        self.canvas.yview_moveto(0)
-    
+        self.display_images(self.all_img_paths)
+        
     def show_user_cards(self):
-        self.clear_grid()
         self.only_user_cards = True
-        for index, path in enumerate(self.user_img_paths):
-            try:
-                img = Image.open(path)
-                img = img.resize((276, 390))
-                photo = ImageTk.PhotoImage(img)
-                label = ttk.Label(self.scrollable_frame, image=photo)
-                label.image = photo
-                row = index // self.columns
-                col = index % self.columns
-                label.grid(row=row, column=col, padx=5, pady=5)
-            except Exception as e:
-                print(f"Fehler bei {path}: {e}")
-        self.canvas.update_idletasks()
-        self.canvas.yview_moveto(0)
+        self.display_images(self.user_img_paths)
     
     def filter_cards(self, only_user_cards=False):
         typ = self.type_combobox.get()
@@ -106,30 +98,12 @@ class PokebookApp:
         base_path = os.getenv("PATH_ALL_CARDS")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
 
-        self.clear_grid()
-        self.card_images = []
-        for index, path in enumerate(filtered_paths):
-            try:
-                img = Image.open(path)
-                img = img.resize((276, 390))
-                photo = ImageTk.PhotoImage(img)
-                self.card_images.append(photo)
-                label = ttk.Label(self.scrollable_frame, image=photo)
-                label.image = photo
-                row = index // self.columns
-                col = index % self.columns
-                label.grid(row=row, column=col, padx=5, pady=5)
-            except Exception as e:
-                print(f"Fehler bei {path}: {e}")
-        self.canvas.update_idletasks()
-        self.canvas.yview_moveto(0)
-        
+        self.display_images(filtered_paths)
 
     def reset_button(self):
         self.type_combobox.set("")
         self.rarity_combobox.set("")
         self.pack_combobox.set("")
-        
         self.name_entry.delete(0, tk.END)
 
         if self.only_user_cards:
@@ -172,6 +146,7 @@ class PokebookApp:
         self.my_cards_button = ttk.Button(
             self.menu_frame, 
             text="Meine Karten",
+            bootstyle="secondary.Outline.TButton",
             width=10,
             command=lambda:[self.show_user_cards(), self.change_button_colour(self.my_cards_button, self.all_cards_button)])
         self.my_cards_button.grid(row=0, column=1)
@@ -185,7 +160,7 @@ class PokebookApp:
 
         self.name_entry = ttk.Entry(self.menu_frame, bootstyle="secondary")
         self.name_entry.grid(row=3, column=0, columnspan=2, padx=10, pady=(5,10), sticky="ew")
-        self.name_entry.bind("<Return>", lambda event: self.search_by_name())
+        self.name_entry.bind("<Return>", lambda event: self.filter_cards())
 
         # Typ Combobox
         self.type_label = ttk.Label(self.menu_frame, text="Typ:", bootstyle="secondary", font=("Helvetica", 14))
@@ -219,10 +194,6 @@ class PokebookApp:
         # Reset Button
         self.reset_button = ttk.Button(self.menu_frame, text="Reset", width=8, bootstyle="secondary", command=self.reset_button)
         self.reset_button.grid(row=10, column=1, padx=5, pady=10, sticky="w")
-
-        # Grid Frame 
-        self.grid_frame = ttk.Frame(self.root)
-        self.grid_frame.grid(row=0, column=1, sticky="nsew", padx=(5, 10), pady=10)
 
         # Container für Canvas
         self.container = ttk.Frame(self.root)
