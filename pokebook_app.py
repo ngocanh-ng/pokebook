@@ -112,8 +112,7 @@ class PokebookApp:
         self.display_images(filtered_paths)
 
         self.display_images(filtered_paths)
-        self.update_card_counter(total=len(filtered_paths))
-
+        #self.update_card_counter(total=len(filtered_paths))
 
     def reset_filters(self):
         self.type_combobox.set("")
@@ -305,6 +304,7 @@ class PokebookApp:
 
 
 # Test
-root = ttk.Window(themename="minty")
+'''root = ttk.Window(themename="minty")
 PokebookApp(root, "1", 1)
 root.mainloop()
+'''
