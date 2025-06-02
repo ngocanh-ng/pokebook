@@ -131,6 +131,24 @@ def get_user_img_details(user_id):
         cur.close()
         conn.close()
 
+def get_all_img_details():
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+
+        query = "SELECT DISTINCT karte.Bildname, typ.Name, seltenheit.Name, paeckchen.Name FROM zuordnung_benutzer_karte INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID INNER JOIN typ ON karte.Typ = typ.TypID INNER JOIN seltenheit ON karte.Seltenheit = seltenheit.SeltenheitID INNER JOIN paeckchen ON karte.Paeckchen = paeckchen.PaeckchenID ORDER BY karte.Bildname ASC"
+        cur.execute(query)
+
+        result = cur.fetchall()
+        return result
+    
+    except mariadb.Error as e:
+        print(f"DB Fehler: {e}")
+        return []
+    finally:
+        cur.close()
+        conn.close()
+
 def get_id(table, name):
     try:
         conn = connect_db()

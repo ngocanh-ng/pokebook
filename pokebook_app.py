@@ -193,11 +193,17 @@ class PokebookApp:
         else:
             self.counter_label.configure(text=f"{total_cards} Karten insgesamt, {user_cards} in Sammlung")
 
-    def export_user_collection_as_csv(self):
-        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Dateien", "*.csv")],initialfile="meine_sammlung.csv")
+    def export_collection_as_csv(self):
+        if not self.is_admin:
+            file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Dateien", "*.csv")],initialfile="Meine_Sammlung.csv")
+            data = db.get_user_img_details(self.user_id)
+        else:
+            file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Dateien", "*.csv")],initialfile="Komplette_Sammlung.csv")
+            data = db.get_all_img_details()
+
         if not file_path:
             return
-        data = db.get_user_img_details(self.user_id)
+        
         with open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
             writer = csv.writer(file, delimiter=";")
             writer.writerow(["Name", "Typ", "Seltenheit", "Päckchen"])
@@ -205,18 +211,25 @@ class PokebookApp:
                 name_without_png = os.path.splitext(bildname)[0]
                 writer.writerow([name_without_png, typ, seltenheit, pack])
 
-    def export_user_collection_as_pdf(self):
-        file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Dateien", "*.pdf")], initialfile="meine_sammlung.pdf")
+    def export_collection_as_pdf(self):
+        if not self.is_admin:
+            file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Dateien", "*.pdf")], initialfile="Meine_Sammlung.pdf")
+            data = db.get_user_img_details(self.user_id)
+        else:
+            file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Dateien", "*.pdf")], initialfile="Komplette_Sammlung.pdf")
+            data = db.get_all_img_details()
+
         if not file_path:
             return
-
-        data = db.get_user_img_details(self.user_id)
 
         c = canvas.Canvas(file_path, pagesize=A4)
         width, height = A4
         y = height - 50
         c.setFont("Helvetica", 12)
-        c.drawString(50, y, f"Pokémon-Kartensammlung von {self.username}")
+        if not self.is_admin:
+            c.drawString(50, y, f"Pokémon-Kartensammlung von {self.username}")
+        else:
+            c.drawString(50, y, f" Komplette Pokémon-Kartensammlung")
         y -= 30
         c.setFont("Helvetica", 10)
 
@@ -235,8 +248,8 @@ class PokebookApp:
         menubar = ttk.Menu(self.root)
         # Datei-Menü
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Exportieren als PDF", command=self.export_user_collection_as_pdf)
-        file_menu.add_command(label="Exportieren als CSV", command=self.export_user_collection_as_csv)
+        file_menu.add_command(label="Exportieren als PDF", command=self.export_collection_as_pdf)
+        file_menu.add_command(label="Exportieren als CSV", command=self.export_collection_as_csv)
         file_menu.add_separator()
         menubar.add_cascade(label="Menü", menu=file_menu)
         file_menu.add_command(label="Logout")
