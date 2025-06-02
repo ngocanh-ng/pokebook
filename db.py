@@ -91,3 +91,24 @@ def get_filtered_img_names(user_id = None, name=None, typ = None, rarity = None,
     finally:
         cur.close()
         conn.close()
+
+import sqlite3
+import os
+
+def get_user_img_details(user_id):
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+
+        query = "SELECT karte.Bildname, typ.Name, seltenheit.Name, paeckchen.Name FROM zuordnung_benutzer_karte INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID INNER JOIN typ ON karte.Typ = typ.TypID INNER JOIN seltenheit ON karte.Seltenheit = seltenheit.SeltenheitID INNER JOIN paeckchen ON karte.Paeckchen = paeckchen.PaeckchenID WHERE zuordnung_benutzer_karte.Benutzer = %s ORDER BY karte.Bildname ASC"
+        cur.execute(query, (user_id,))
+
+        result = cur.fetchall()
+        return result
+    
+    except mariadb.Error as e:
+        print(f"DB Fehler: {e}")
+        return []
+    finally:
+        cur.close()
+        conn.close()

@@ -2,7 +2,12 @@ import tkinter as tk
 import ttkbootstrap as ttk
 import os
 from PIL import Image, ImageTk
-from db import get_all_img_names, get_user_img_names, get_filtered_img_names
+from db import get_all_img_names, get_user_img_names, get_filtered_img_names, get_user_img_details
+import csv
+from tkinter import filedialog
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from fpdf import FPDF
 
 class PokebookApp:
     def __init__(self, root, username, user_id):
@@ -175,13 +180,53 @@ class PokebookApp:
         user_cards = len(self.user_img_paths)
         self.counter_label.configure(text=f"{total_cards} Karten insgesamt, {user_cards} in Sammlung")
 
+    def export_user_collection_as_csv(self):
+        file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Dateien", "*.csv")])
+        if not file_path:
+            return
+
+        data = get_user_img_details(self.user_id) 
+
+        with open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file, delimiter=";")
+            writer.writerow(["Name", "Typ", "Seltenheit", "Päckchen"])
+            for bildname, typ, seltenheit, pack in data:
+                name_without_png = os.path.splitext(bildname)[0]
+                writer.writerow([name_without_png, typ, seltenheit, pack])
+
+    def export_user_collection_as_pdf(self):
+        file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Dateien", "*.pdf")])
+        if not file_path:
+            return
+
+        data = get_user_img_details(self.user_id)
+
+        c = canvas.Canvas(file_path, pagesize=A4)
+        width, height = A4
+        y = height - 50
+        c.setFont("Helvetica", 12)
+        c.drawString(50, y, f"Pokémon-Kartensammlung von {self.username}")
+        y -= 30
+        c.setFont("Helvetica", 10)
+
+        for bildname, typ, seltenheit, pack in data:
+            name_without_png = os.path.splitext(bildname)[0]
+            line = f"Name: {name_without_png} | Typ: {typ} | Seltenheit: {seltenheit} | Päckchen: {pack}"
+            c.drawString(50, y, line)
+            y -= 20
+            if y < 50:
+                c.showPage()
+                y = height - 50
+
+        c.save()
 
     def setup_ui(self):
         # Menüleister
         menubar = ttk.Menu(self.root)
         # Datei-Menü
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Exportieren")
+        file_menu.add_command(label="Exportieren als PDF", command=self.export_user_collection_as_pdf)
+        file_menu.add_command(label="Exportieren als CSV", command=self.export_user_collection_as_csv)
         file_menu.add_separator()
         file_menu.add_command(label="Logout")
         menubar.add_cascade(label="Datei", menu=file_menu)
