@@ -132,10 +132,11 @@ class PokebookApp:
         self.display_images(filtered_paths)
 
     def reset_filters(self):
-        self.type_combobox.set("")
+        self.type_filter_combobox.set("")
         self.rarity_filter_combobox.set("")
         self.pack_filter_combobox.set("")
         self.name_filter_entry.delete(0, tk.END)
+        self.sort_combobox.set("")
 
         if self.only_user_cards:
             self.show_user_cards()
@@ -143,7 +144,6 @@ class PokebookApp:
             self.show_all_cards()
     
     def show_card_details(self, image_path: str):
-        # Neues Toplevel-Fenster öffnen
         detail_window = tk.Toplevel(self.root)
         detail_window.title("Kartendetails")
 
@@ -152,7 +152,7 @@ class PokebookApp:
 
         try:
             img = Image.open(image_path)
-            img = img.resize((360, 510))  # Größere Darstellung
+            img = img.resize((360, 510))  #
             photo = ImageTk.PhotoImage(img)
 
             label = ttk.Label(detail_window, image=photo)
@@ -289,7 +289,7 @@ class PokebookApp:
         self.sort_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Sortieren nach:", font=("Arial bold", 15))
         self.sort_label.grid(row=2, column=0, columnspan=2, sticky="w", pady=(15,5))
         
-        self.sort_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Name", "Typ", "Seltenheit", "Pack"])
+        self.sort_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Name", "Typ", "Seltenheit", "Päckchen"])
         self.sort_combobox.grid(row=3, column=0, columnspan=2, pady=(5,10))
         self.sort_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
 
@@ -309,11 +309,11 @@ class PokebookApp:
         self.type_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Typ:", font=("Arial", 14))
         self.type_filter_label.grid(row=7, column=0, columnspan=2, sticky="w")
 
-        self.type_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["","Pflanze", "Feuer", "Wasser", "Elektro", 
+        self.type_filter_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["","Pflanze", "Feuer", "Wasser", "Elektro", 
         "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"])
-        self.type_combobox.grid(row=8, column=0, columnspan=2, pady=(5,10))
-        self.type_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
-        self.type_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
+        self.type_filter_combobox.grid(row=8, column=0, columnspan=2, pady=(5,10))
+        self.type_filter_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
+        self.type_filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
         self.type_map = {"Pflanze": 1, "Feuer": 2, "Wasser": 3, "Elektro": 4, "Psycho": 5, "Kampf": 6, "Finsternis": 7, "Metall": 8, "Fee": 9, "Drache": 10, "Farblos": 11}
 
         # Seltenheit Combobox
@@ -412,7 +412,7 @@ class PokebookApp:
             return
         
         db.add_cards_to_db(messagebox, name, typ_id, seltenheit_id, pack_id, image_name)
-        self.clearform()
+        self.clear_form()
     
     def clear_form(self):
         self.name_add_entry.delete(0, 'end')

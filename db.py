@@ -91,7 +91,7 @@ def get_filtered_img_names(user_id = None, name=None, typ = None, rarity = None,
             params.append(pack)
         if name:
             query += " AND karte.Name LIKE ?"
-            params.append(f"%{name}%")
+            params.append(f"{name}%")
 
         sort_field_map = {
         "Name": "karte.Name",
