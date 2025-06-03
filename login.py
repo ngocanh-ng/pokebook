@@ -74,8 +74,8 @@ class LoginApp:
         # Button-Größe
         s = ttk.Style()
         s.configure("TButton", font=("Helvetica", 12))
-        username_label = ttk.Label(self.root, text="Benutzername:", font=("Helvetica", 12))
 
+        username_label = ttk.Label(self.root, text="Benutzername:", font=("Helvetica", 12))
         username_label.grid(row=2, column=1, pady=(20,15), padx=10, sticky="e")
 
         self.username_entry = ttk.Entry(self.root, width=18, font=("Helvetica", 12))
@@ -124,11 +124,11 @@ class LoginApp:
                 screen_width = self.root.winfo_screenwidth()
                 screen_height = self.root.winfo_screenheight()
                 window_width = 1910
-                window_height = 1050
+                window_height = 1070
                 x = (screen_width - window_width) // 2
                 y = (screen_height - window_height) // 2
                 self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
-                
+
             else:
                 messagebox.showerror("Fehler", "Falsches Passwort!")
 

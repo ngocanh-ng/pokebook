@@ -18,6 +18,20 @@ class PokebookApp:
         self.columns = 4
         self.root.title(f"Pokébook – {username}")
 
+        # Button-Größe
+        s = ttk.Style()
+        s.configure("TButton", font=("Helvetica", 11))
+
+        # neue Fenstergröße und Position
+        self.root.update_idletasks()
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = 1910
+        window_height = 1070
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
+
         # Grid-Konfiguration zurücksetzen
         for i in range(3):
             self.root.grid_columnconfigure(i, weight=0)
@@ -70,8 +84,8 @@ class PokebookApp:
     def display_images(self, image_paths):
         self.clear_grid()
         self.card_images = []
-        CARD_WIDTH = 276
-        CARD_HEIGHT = 390
+        CARD_WIDTH = 375
+        CARD_HEIGHT = round(CARD_WIDTH * 1.41)
         for index, path in enumerate(image_paths):
             try:
                 img = Image.open(path)
@@ -247,7 +261,7 @@ class PokebookApp:
 
         # Menüleiste setzen
         self.root.config(menu=menubar)
-
+        
         # Menü-Frame
         self.menu_frame = ttk.Frame(self.root, borderwidth=10, relief = tk.GROOVE)
         self.menu_frame.grid(row=0, column=0, sticky="n", padx=(15,5))
@@ -258,70 +272,99 @@ class PokebookApp:
                 self.menu_frame, 
                 text="Alle Karten", 
                 bootstyle="primary.Outline.TButton", 
-                width=10, 
+                width=11, 
                 command=lambda:[self.show_all_cards(), self.change_button_colour(self.all_cards_button, self.my_cards_button)])
-            self.all_cards_button.grid(row=0, column=0)
+            self.all_cards_button.grid(row=0, column=0, sticky="e")
 
             # Meine Karten Button
             self.my_cards_button = ttk.Button(
                 self.menu_frame, 
                 text="Meine Karten",
                 bootstyle="primary.Outline.TButton",
-                width=10,
+                width=11,
                 command=lambda:[self.show_user_cards(), self.change_button_colour(self.my_cards_button, self.all_cards_button)])
-            self.my_cards_button.grid(row=0, column=1)
+            self.my_cards_button.grid(row=0, column=1, sticky="w")
         else:
-            self.admin_label = ttk.Label(self.menu_frame, text="Admin-Bereich", bootstyle="secondary", font=("Arial bold", 18) )
-            self.admin_label.grid(row=0, column=0, columnspan=2, pady=5)
+            self.admin_label = ttk.Label(self.menu_frame, text="Admin-Bereich", bootstyle="secondary", font=("Arial", 13, "bold") )
+            self.admin_label.grid(row=0, column=0, columnspan=2, pady=(0,5))
             self.menu_separator = ttk.Separator(self.menu_frame, bootstyle="secondary")
             self.menu_separator.grid(row=1, column=0, columnspan=2, sticky="ew")
 
         # Sortierung
-        self.sort_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Sortieren nach:", font=("Arial bold", 15))
+        self.sort_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Sortieren:", font=("Arial", "12","bold"))
         self.sort_label.grid(row=2, column=0, columnspan=2, sticky="w", pady=(15,5))
         
-        self.sort_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Name", "Typ", "Seltenheit", "Päckchen"])
+        self.sort_combobox = ttk.Combobox(self.menu_frame, bootstyle="primary", width=28, state="readonly", values=["", "Name", "Typ", "Seltenheit", "Päckchen"])
         self.sort_combobox.grid(row=3, column=0, columnspan=2, pady=(5,10))
         self.sort_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
 
         # Filter 
-        self.filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Filter", font=("Arial bold", 15))
+        self.filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Filter:", font=("Arial", "12","bold"))
         self.filter_label.grid(row=4, column=0, columnspan=2, sticky="w", pady=(5,8))
 
         # Name
-        self.name_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Name:", font=("Arial", 14))
+        self.name_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Name:", font=("Arial", "11", "bold"))
         self.name_filter_label.grid(row=5, column=0, columnspan=2, sticky="w")
 
-        self.name_filter_entry = ttk.Entry(self.menu_frame, bootstyle="primary")
+        self.name_filter_entry = ttk.Entry(self.menu_frame, bootstyle="primary", width=30)
         self.name_filter_entry.grid(row=6, column=0, columnspan=2, pady=(5,10))
         self.name_filter_entry.bind("<KeyRelease>", self.schedule_name_filter)
 
         # Typ Combobox
-        self.type_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Typ:", font=("Arial", 14))
+        self.type_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Typ:", font=("Arial", "11", "bold"))
         self.type_filter_label.grid(row=7, column=0, columnspan=2, sticky="w")
 
-        self.type_filter_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["","Pflanze", "Feuer", "Wasser", "Elektro", 
-        "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"])
+        self.type_filter_combobox = ttk.Combobox(
+            self.menu_frame, 
+            bootstyle="primary", 
+            width=28, 
+            state="readonly", 
+            values=["","Pflanze", "Feuer", "Wasser", "Elektro", "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"]
+            )
         self.type_filter_combobox.grid(row=8, column=0, columnspan=2, pady=(5,10))
         self.type_filter_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
         self.type_filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
-        self.type_map = {"Pflanze": 1, "Feuer": 2, "Wasser": 3, "Elektro": 4, "Psycho": 5, "Kampf": 6, "Finsternis": 7, "Metall": 8, "Fee": 9, "Drache": 10, "Farblos": 11}
+        self.type_map = {
+            "Pflanze": 1, 
+            "Feuer": 2, 
+            "Wasser": 3, 
+            "Elektro": 4, 
+            "Psycho": 5, 
+            "Kampf": 6, 
+            "Finsternis": 7, 
+            "Metall": 8, 
+            "Fee": 9, 
+            "Drache": 10, 
+            "Farblos": 11
+            }
 
         # Seltenheit Combobox
-        self.rarity_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Seltenheit:", font=("Arial", 14))
+        self.rarity_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Seltenheit:", font=("Arial", "11", "bold"))
         self.rarity_filter_label.grid(row=9, column=0, columnspan=2, sticky="w")
 
-        self.rarity_filter_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Common", "Uncommon", "Rare", "Double Rare", "Ultra Rare", "Art Rare", "Special Art Rare", "Secret Rare"])
+        self.rarity_filter_combobox = ttk.Combobox(
+            self.menu_frame,  
+            bootstyle="primary", 
+            width=28, 
+            state="readonly", 
+            values=["", "Common", "Uncommon", "Rare", "Double Rare", "Ultra Rare", "Art Rare", "Special Art Rare", "Secret Rare"]
+            )
         self.rarity_filter_combobox.grid(row=10, column=0, columnspan=2, pady=(5,10))
         self.rarity_filter_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
         self.rarity_filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
         self.rarity_map = {"Common": 1, "Uncommon": 2, "Rare": 3, "Double Rare": 4, "Ultra Rare": 5, "Art Rare": 6, "Special Art Rare": 7, "Secret Rare": 8}
 
         # Päckchen Combobox
-        self.pack_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Päckchen:", font=("Arial", 14))
+        self.pack_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Päckchen:", font=("Arial", "11", "bold"))
         self.pack_filter_label.grid(row=11, column=0, columnspan=2, sticky="w")
 
-        self.pack_filter_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=["", "Reisegefährten", "Welten im Wandel"])
+        self.pack_filter_combobox = ttk.Combobox(
+            self.menu_frame, 
+            bootstyle="primary", 
+            width = 28, 
+            state="readonly", 
+            values=["", "Reisegefährten", "Welten im Wandel"]
+            )
         self.pack_filter_combobox.grid(row=12, column=0, columnspan=2, pady=(5,10))
         self.pack_filter_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
         self.pack_filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
@@ -332,7 +375,7 @@ class PokebookApp:
         self.reset_button.grid(row=13, column=0, columnspan=2, padx=5, pady=10)
 
         # Karten-Zähler
-        self.counter_label = ttk.Label(self.menu_frame, text="", bootstyle="primary", font=("Arial", 13))
+        self.counter_label = ttk.Label(self.menu_frame, text="", bootstyle="primary", font=("Arial", "10"))
         if not self.is_admin:
             self.counter_label.grid(row=14, column=0, columnspan=2, pady=(10, 0))
         else:
@@ -413,35 +456,35 @@ class PokebookApp:
         self.image_filename = None
     
     def add_card_menu(self):
-        self.add_cards_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Karten hinzufügen", font=("Arial bold", 14))
-        self.add_cards_label.grid(row=14, column=0, pady=(5,0), sticky="w")
+        self.add_cards_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Karten hinzufügen", font=("Arial", 13, "bold"))
+        self.add_cards_label.grid(row=14, column=0, columnspan=2, pady=(5,0))
 
-        self.name_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Name:", font=("Arial", 14))
+        self.name_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Name:", font=("Arial", 11, "bold"))
         self.name_add_label.grid(row=15, column=0, sticky="w", pady=5)
-        self.name_add_entry = ttk.Entry(self.menu_frame, bootstyle="secondary")
+        self.name_add_entry = ttk.Entry(self.menu_frame, bootstyle="secondary", width=30)
         self.name_add_entry.grid(row=16, column=0, columnspan=2)
 
-        self.typ_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Typ", font=("Arial", 14))
+        self.typ_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Typ:", font=("Arial", 11, "bold"))
         self.typ_add_label.grid(row=17, column=0, sticky="w", pady=5)
-        self.typ_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=db.get_options("typ"))
+        self.typ_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=db.get_options("typ"))
         self.typ_combobox.grid(row=18, column=0, columnspan=2, padx=5)
 
-        self.seltenheit_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Seltenheit", font=("Arial", 14))
+        self.seltenheit_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Seltenheit", font=("Arial", 11, "bold"))
         self.seltenheit_add_label.grid(row=19, column=0, sticky="w", pady=5)
-        self.seltenheit_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=db.get_options("seltenheit"))
+        self.seltenheit_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=db.get_options("seltenheit"))
         self.seltenheit_combobox.grid(row=20, column=0, columnspan=2, padx=5)
 
-        self.pack_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Päckchen", font=("Arial", 14))
+        self.pack_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Päckchen", font=("Arial", 11, "bold"))
         self.pack_add_label.grid(row=21, column=0, sticky="w", pady=5)
-        self.pack_add_combobox = ttk.Combobox(self.menu_frame, state="readonly", values=db.get_options("paeckchen"))
+        self.pack_add_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=db.get_options("paeckchen"))
         self.pack_add_combobox.grid(row=22, column=0, columnspan=2, padx=5)
 
         self.upload_button = ttk.Button(self.menu_frame, bootstyle="secondary.Outline.TButton", text="Bild auswählen", command=self.select_image)
-        self.upload_button.grid(row=23, column=0, columnspan=2, pady=10)
+        self.upload_button.grid(row=23, column=0, columnspan=2, pady=(20,15))
 
         self.add_button = ttk.Button(self.menu_frame, bootstyle="secondary", text="Karte hinzufügen", command=self.add_cards)
         self.add_button.grid(row=24, column=0, columnspan=2, pady=10)        
 
 '''root = ttk.Window(themename="minty")
-PokebookApp(root, "user", 1, False)
+PokebookApp(root, "user", 4, True)
 root.mainloop()'''
