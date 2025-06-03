@@ -19,7 +19,7 @@ def connect_db():
             user=os.getenv("LOCAL_USER"),
             password=os.getenv("LOCAL_PASSWORD"),
             host=os.getenv("LOCAL_HOST"),
-            port=3307,
+            port=3306,
             database="team02"
         )
         return connection

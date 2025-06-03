@@ -451,7 +451,3 @@ class PokebookApp:
         self.add_button = ttk.Button(self.menu_frame, bootstyle="secondary", text="Karte hinzufügen", command=self.add_cards)
         self.add_button.grid(row=24, column=0, columnspan=2, pady=10)        
 
-# Test
-root = ttk.Window(themename="minty")
-PokebookApp(root, "Ngoc Anh", 4, is_admin=True)
-root.mainloop()
