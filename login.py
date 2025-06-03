@@ -19,12 +19,13 @@ class LoginApp:
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        window_width = 350
-        window_height = 350
+        window_width = 450
+        window_height = 525
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
-        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
 
+        # Icon
         try:
             img = Image.open("assets/pokeball.png") 
             img = img.resize((32, 32), Image.LANCZOS)
@@ -41,25 +42,21 @@ class LoginApp:
         self.root.grid_columnconfigure(1, weight=0) 
         self.root.grid_columnconfigure(2, weight=1) 
 
-        username_label = ttk.Label(self.root, text="Benutzername:", font=("Helvetica", 13))
-        username_label.grid(row=0, column=1, pady=15, padx=10, sticky="e")
+        # Titel
+        try:
+            title_img = Image.open("assets/title.png") 
+            base_width = 250
+            w_percent = (base_width / float(title_img.size[0]))
+            h_size = int((float(title_img.size[1]) * float(w_percent)))
+            title_img = title_img.resize((base_width, h_size), Image.LANCZOS)
 
-        self.username_entry = ttk.Entry(self.root, width=20)
-        self.username_entry.grid(row=0, column=2, pady=15, padx=10, sticky="w")
+            self.title_photo = ImageTk.PhotoImage(title_img)
+            title_label = ttk.Label(self.root, image=self.title_photo)
+            title_label.grid(row=0, column=0, columnspan=3, pady=(5, 0))
+        except Exception as e:
+            print(f"Error loading logo image: {e}")
 
-        password_label = ttk.Label(self.root, text="Passwort:", font=("Helvetica", 13))
-        password_label.grid(row=1, column=1, pady=15, padx=10, sticky="e")
-
-        self.password_entry = ttk.Entry(self.root, show="*", width=20)
-        self.password_entry.grid(row=1, column=2, pady=15, padx=10, sticky="w")
-
-        self.login_button = ttk.Button(root, text="Anmelden", bootstyle="secondary", command=self.login
-        )
-        self.login_button.grid(row=2, column=0, columnspan=3, pady=15) # Anh: Login-Button neu positioniert
-
-        self.username_entry.bind("<Return>", lambda event: self.login())
-        self.password_entry.bind("<Return>", lambda event: self.login())
-
+        # Logo
         try:
             logo_img = Image.open("assets/logo.png") 
             base_width = 300
@@ -69,9 +66,35 @@ class LoginApp:
 
             self.logo_photo = ImageTk.PhotoImage(logo_img)
             logo_label = ttk.Label(self.root, image=self.logo_photo)
-            logo_label.grid(row=3, column=0, columnspan=3, pady=(5, 10))
+            logo_label.grid(row=1, column=0, columnspan=3, pady=(0, 20))
         except Exception as e:
             print(f"Error loading logo image: {e}")
+        
+        # Button-Größe
+        s = ttk.Style()
+        s.configure("TButton", font=("Helvetica", 12))
+        username_label = ttk.Label(self.root, text="Benutzername:", font=("Helvetica", 12))
+
+        username_label.grid(row=2, column=1, pady=(20,15), padx=10, sticky="e")
+
+        self.username_entry = ttk.Entry(self.root, width=25)
+        self.username_entry.grid(row=2, column=2, pady=(20,15), padx=10, sticky="w")
+
+        password_label = ttk.Label(self.root, text="Passwort:", font=("Helvetica", 12))
+        password_label.grid(row=3, column=1, pady=15, padx=10, sticky="e")
+
+        self.password_entry = ttk.Entry(self.root, show="*", width=25)
+        self.password_entry.grid(row=3, column=2, pady=15, padx=10, sticky="w")
+
+        self.login_button = ttk.Button(root, text="Anmelden", bootstyle="primary", command=self.login
+        )
+
+        self.login_button.grid(row=4, column=0, columnspan=3, pady=(20, 30))
+
+        self.username_entry.bind("<Return>", lambda event: self.login())
+        self.password_entry.bind("<Return>", lambda event: self.login())
+
+        
 
     def login(self):
         username = self.username_entry.get()
