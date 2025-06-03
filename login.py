@@ -16,11 +16,12 @@ class LoginApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Pokébook") 
+        self.root.resizable(False, False)
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        window_width = 450
-        window_height = 525
+        window_width = 500
+        window_height = 600
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
@@ -45,21 +46,21 @@ class LoginApp:
         # Titel
         try:
             title_img = Image.open("assets/title.png") 
-            base_width = 250
+            base_width = 300
             w_percent = (base_width / float(title_img.size[0]))
             h_size = int((float(title_img.size[1]) * float(w_percent)))
             title_img = title_img.resize((base_width, h_size), Image.LANCZOS)
 
             self.title_photo = ImageTk.PhotoImage(title_img)
             title_label = ttk.Label(self.root, image=self.title_photo)
-            title_label.grid(row=0, column=0, columnspan=3, pady=(5, 0))
+            title_label.grid(row=0, column=0, columnspan=3, pady=(15, 0))
         except Exception as e:
             print(f"Error loading logo image: {e}")
 
         # Logo
         try:
             logo_img = Image.open("assets/logo.png") 
-            base_width = 300
+            base_width = 400
             w_percent = (base_width / float(logo_img.size[0]))
             h_size = int((float(logo_img.size[1]) * float(w_percent)))
             logo_img = logo_img.resize((base_width, h_size), Image.LANCZOS)
@@ -77,23 +78,22 @@ class LoginApp:
 
         username_label.grid(row=2, column=1, pady=(20,15), padx=10, sticky="e")
 
-        self.username_entry = ttk.Entry(self.root, width=25)
+        self.username_entry = ttk.Entry(self.root, width=18, font=("Helvetica", 12))
         self.username_entry.grid(row=2, column=2, pady=(20,15), padx=10, sticky="w")
 
         password_label = ttk.Label(self.root, text="Passwort:", font=("Helvetica", 12))
         password_label.grid(row=3, column=1, pady=15, padx=10, sticky="e")
 
-        self.password_entry = ttk.Entry(self.root, show="*", width=25)
+        self.password_entry = ttk.Entry(self.root, show="*", width=18, font=("Helvetica", 12) )
         self.password_entry.grid(row=3, column=2, pady=15, padx=10, sticky="w")
 
-        self.login_button = ttk.Button(root, text="Anmelden", bootstyle="primary", command=self.login
+        self.login_button = ttk.Button(root, text="Anmelden", bootstyle="primary.Outline.TButton", command=self.login
         )
 
         self.login_button.grid(row=4, column=0, columnspan=3, pady=(20, 30))
 
         self.username_entry.bind("<Return>", lambda event: self.login())
         self.password_entry.bind("<Return>", lambda event: self.login())
-
         
 
     def login(self):
@@ -118,6 +118,7 @@ class LoginApp:
                 for widget in self.root.winfo_children():
                     widget.destroy()
                 PokebookApp(self.root, username, user_id, is_admin=bool(is_admin))
+
                 # neue Fenstergröße und Position
                 self.root.update_idletasks()
                 screen_width = self.root.winfo_screenwidth()
@@ -127,6 +128,7 @@ class LoginApp:
                 x = (screen_width - window_width) // 2
                 y = (screen_height - window_height) // 2
                 self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
+                
             else:
                 messagebox.showerror("Fehler", "Falsches Passwort!")
 
