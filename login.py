@@ -29,7 +29,8 @@ class LoginApp:
             img = Image.open("assets/pokeball.png") 
             img = img.resize((32, 32), Image.LANCZOS)
             self.icon = ImageTk.PhotoImage(img)
-            self.root.iconphoto(True, self.icon)
+            self.root.wm_iconphoto(False, self.icon)
+
         except Exception as e:
             print(f"Fehler beim Laden des Icons: {e}")
        
