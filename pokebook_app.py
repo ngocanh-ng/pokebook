@@ -294,7 +294,7 @@ class PokebookApp:
         self.sort_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Sortieren:", font=("Arial", "12","bold"))
         self.sort_label.grid(row=2, column=0, columnspan=2, sticky="w", pady=(15,5))
         
-        self.sort_combobox = ttk.Combobox(self.menu_frame, bootstyle="primary", width=28, state="readonly", values=["", "Name", "Typ", "Seltenheit", "Päckchen"])
+        self.sort_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=["", "Name", "Typ", "Seltenheit", "Päckchen"])
         self.sort_combobox.grid(row=3, column=0, columnspan=2, pady=(5,10))
         self.sort_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
 
@@ -316,7 +316,6 @@ class PokebookApp:
 
         self.type_filter_combobox = ttk.Combobox(
             self.menu_frame, 
-            bootstyle="primary", 
             width=28, 
             state="readonly", 
             values=["","Pflanze", "Feuer", "Wasser", "Elektro", "Psycho", "Kampf", "Finsternis", "Metall", "Fee", "Drache", "Farblos"]
@@ -343,8 +342,7 @@ class PokebookApp:
         self.rarity_filter_label.grid(row=9, column=0, columnspan=2, sticky="w")
 
         self.rarity_filter_combobox = ttk.Combobox(
-            self.menu_frame,  
-            bootstyle="primary", 
+            self.menu_frame,
             width=28, 
             state="readonly", 
             values=["", "Common", "Uncommon", "Rare", "Double Rare", "Ultra Rare", "Art Rare", "Special Art Rare", "Secret Rare"]
@@ -359,8 +357,7 @@ class PokebookApp:
         self.pack_filter_label.grid(row=11, column=0, columnspan=2, sticky="w")
 
         self.pack_filter_combobox = ttk.Combobox(
-            self.menu_frame, 
-            bootstyle="primary", 
+            self.menu_frame,
             width = 28, 
             state="readonly", 
             values=["", "Reisegefährten", "Welten im Wandel"]
