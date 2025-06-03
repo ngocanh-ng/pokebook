@@ -81,7 +81,7 @@ class LoginApp:
             return
 
         try: 
-            query = "SELECT BenutzerID, PasswortHash, is_admin FROM benutzer WHERE benutzername = %s" # Geändert
+            query = "SELECT BenutzerID, PasswortHash, is_admin FROM benutzer WHERE benutzername = %s" 
             self.cursor.execute(query, (username,))
             result = self.cursor.fetchone()
         except mariadb.Error as e:
@@ -89,11 +89,20 @@ class LoginApp:
             return
 
         if result:
-            user_id, stored_hash, is_admin = result[0], result[1].encode('utf-8'), result[2] # Geändert
+            user_id, stored_hash, is_admin = result[0], result[1].encode('utf-8'), result[2]
             if bcrypt.checkpw(password.encode('utf-8'), stored_hash):
                 for widget in self.root.winfo_children():
                     widget.destroy()
-                PokebookApp(self.root, username, user_id, is_admin=bool(is_admin)) # Geändert
+                PokebookApp(self.root, username, user_id, is_admin=bool(is_admin))
+                # neue Fenstergröße und Position
+                self.root.update_idletasks()
+                screen_width = self.root.winfo_screenwidth()
+                screen_height = self.root.winfo_screenheight()
+                window_width = 1910
+                window_height = 1050
+                x = (screen_width - window_width) // 2
+                y = (screen_height - window_height) // 2
+                self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
             else:
                 messagebox.showerror("Fehler", "Falsches Passwort!")
 

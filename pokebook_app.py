@@ -18,15 +18,6 @@ class PokebookApp:
         self.columns = 4
         self.root.title(f"Pokébook – {username}")
 
-        # Fenstergröße und Position
-        WINDOW_WIDTH = 1465
-        WINDOW_HEIGHT = 900
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width - WINDOW_WIDTH) // 2
-        y = (screen_height - WINDOW_HEIGHT) // 2
-        self.root.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}+{x}+{y}")
-
         # Grid-Konfiguration zurücksetzen
         for i in range(3):
             self.root.grid_columnconfigure(i, weight=0)
@@ -451,3 +442,6 @@ class PokebookApp:
         self.add_button = ttk.Button(self.menu_frame, bootstyle="secondary", text="Karte hinzufügen", command=self.add_cards)
         self.add_button.grid(row=24, column=0, columnspan=2, pady=10)        
 
+'''root = ttk.Window(themename="minty")
+PokebookApp(root, "user", 1, False)
+root.mainloop()'''
