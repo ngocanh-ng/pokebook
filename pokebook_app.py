@@ -8,6 +8,7 @@ from tkinter import filedialog, messagebox
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import shutil
+from Hinzufügen import open_add_card_window
 
 class PokebookApp:
     def __init__(self, root, username, user_id, is_admin=False):
@@ -238,17 +239,24 @@ class PokebookApp:
                 c.showPage()
                 y = height - 50
         c.save()
-    
+    def logout(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+        from login import LoginApp
+        LoginApp(self.root)
+
     def setup_ui(self):
-        # Menüleister
         menubar = ttk.Menu(self.root)
-        # Datei-Menü
+
         file_menu = tk.Menu(menubar, tearoff=0)
         file_menu.add_command(label="Exportieren als PDF", command=self.export_collection_as_pdf)
         file_menu.add_command(label="Exportieren als CSV", command=self.export_collection_as_csv)
         file_menu.add_separator()
+        file_menu.add_command(label="Logout", command=self.logout)
+
         menubar.add_cascade(label="Menü", menu=file_menu)
-        file_menu.add_command(label="Logout")
+        self.root.config(menu=menubar)
+
 
         # Menüleiste setzen
         self.root.config(menu=menubar)
