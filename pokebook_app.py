@@ -22,15 +22,6 @@ class PokebookApp:
         s = ttk.Style()
         s.configure("TButton", font=("Helvetica", 11))
 
-        # neue Fenstergröße und Position
-        self.root.update_idletasks()
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        window_width = 1910
-        window_height = 1070
-        x = (screen_width - window_width) // 2
-        y = (screen_height - window_height) // 2
-        self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
 
         # Grid-Konfiguration zurücksetzen
         for i in range(3):
