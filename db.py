@@ -13,6 +13,7 @@ ALLOWED_TABLES = {
     "typ": "TypID",
     "zuordnung_benutzer_karte": ""
 }
+
 def connect_db():
     try:
         connection = mariadb.connect(
@@ -113,12 +114,12 @@ def get_filtered_img_names(user_id = None, name=None, typ = None, rarity = None,
         cur.close()
         conn.close()
 
-def get_user_img_details(user_id):
+def get_user_card_details(user_id):
     try:
         conn = connect_db()
         cur = conn.cursor()
 
-        query = "SELECT karte.Bildname, typ.Name, seltenheit.Name, paeckchen.Name FROM zuordnung_benutzer_karte INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID INNER JOIN typ ON karte.Typ = typ.TypID INNER JOIN seltenheit ON karte.Seltenheit = seltenheit.SeltenheitID INNER JOIN paeckchen ON karte.Paeckchen = paeckchen.PaeckchenID WHERE zuordnung_benutzer_karte.Benutzer = ? ORDER BY karte.Bildname ASC"
+        query = "SELECT karte.Name, typ.Name, seltenheit.Name, paeckchen.Name FROM zuordnung_benutzer_karte INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID INNER JOIN typ ON karte.Typ = typ.TypID INNER JOIN seltenheit ON karte.Seltenheit = seltenheit.SeltenheitID INNER JOIN paeckchen ON karte.Paeckchen = paeckchen.PaeckchenID WHERE zuordnung_benutzer_karte.Benutzer = ? ORDER BY karte.Bildname ASC"
         cur.execute(query, (user_id,))
 
         result = cur.fetchall()
@@ -131,12 +132,12 @@ def get_user_img_details(user_id):
         cur.close()
         conn.close()
 
-def get_all_img_details():
+def get_all_card_details():
     try:
         conn = connect_db()
         cur = conn.cursor()
 
-        query = "SELECT DISTINCT karte.Bildname, typ.Name, seltenheit.Name, paeckchen.Name FROM zuordnung_benutzer_karte INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID INNER JOIN typ ON karte.Typ = typ.TypID INNER JOIN seltenheit ON karte.Seltenheit = seltenheit.SeltenheitID INNER JOIN paeckchen ON karte.Paeckchen = paeckchen.PaeckchenID ORDER BY karte.Bildname ASC"
+        query = "SELECT DISTINCT karte.Name, typ.Name, seltenheit.Name, paeckchen.Name FROM zuordnung_benutzer_karte INNER JOIN karte ON zuordnung_benutzer_karte.Karte = karte.KarteID INNER JOIN typ ON karte.Typ = typ.TypID INNER JOIN seltenheit ON karte.Seltenheit = seltenheit.SeltenheitID INNER JOIN paeckchen ON karte.Paeckchen = paeckchen.PaeckchenID ORDER BY karte.Bildname ASC"
         cur.execute(query)
 
         result = cur.fetchall()
@@ -183,7 +184,7 @@ def get_options(table_name):
         cur.close()
         conn.close()
 
-def add_cards_to_db(messagebox, name, typ_id, seltenheit_id, pack_id, image_name):
+def add_card_admin(messagebox, name, typ_id, seltenheit_id, pack_id, image_name):
     try:
         conn = connect_db()
         cur = conn.cursor()

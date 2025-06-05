@@ -5,10 +5,9 @@ from PIL import Image, ImageTk
 import db
 import csv
 from tkinter import filedialog, messagebox
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+import export
+from constants import TYPE_MAP, RARITY_MAP, PACK_MAP
 import shutil
-
 
 class PokebookApp:
     def __init__(self, root, username, user_id, is_admin=False):
@@ -26,7 +25,6 @@ class PokebookApp:
         s = ttk.Style()
         s.configure("TButton", font=("Helvetica", 11))
 
-
         # Grid-Konfiguration zurücksetzen
         for i in range(3):
             self.root.grid_columnconfigure(i, weight=0)
@@ -38,6 +36,7 @@ class PokebookApp:
         self.all_img_paths = self.get_all_img_paths()
         self.user_img_paths = self.get_user_img_paths()
         
+        # Flags
         self.only_user_cards = False
         self.name_filter_after_id = None
 
@@ -63,16 +62,16 @@ class PokebookApp:
             self.add_card_menu()
 
     def get_all_img_paths(self):
-        base_path = os.getenv("PATH_ALL_CARDS")
+        base_path = ("assets/Karten_Bilder")
         all_img_names = db.get_all_img_names()
         return [os.path.join(base_path, name) for name in all_img_names]
 
     def get_user_img_paths(self):
-        base_path = os.getenv("PATH_ALL_CARDS")
+        base_path = ("assets/Karten_Bilder")
         user_img_names = db.get_user_img_names(self.user_id)
         return [os.path.join(base_path, name) for name in user_img_names]
     
-    def change_button_colour(self, clicked_button, other_button):
+    def change_collection_button_colour(self, clicked_button, other_button):
         clicked_button.configure(bootstyle="primary")
         other_button.configure(bootstyle="primary.Outline.TButton")
 
@@ -115,9 +114,9 @@ class PokebookApp:
         name = self.name_filter_entry.get()
 
         # Mapping von Namen zu Index
-        typ = self.type_map.get(typ) if typ else None
-        rarity = self.rarity_map.get(rarity) if rarity else None
-        pack = self.pack_map.get(pack) if pack else None
+        typ = TYPE_MAP.get(typ) if typ else None
+        rarity = RARITY_MAP.get(rarity) if rarity else None
+        pack = PACK_MAP.get(pack) if pack else None
 
         # Sortierung lesen
         sort_crit = self.sort_combobox.get()
@@ -127,7 +126,7 @@ class PokebookApp:
         else:
             img_names = db.get_filtered_img_names(name=name, typ=typ, rarity=rarity, pack=pack, only_user_cards=False, sort_by=sort_crit)
 
-        base_path = os.getenv("PATH_ALL_CARDS")
+        base_path = ("assets/Karten_Bilder")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
         self.display_images(filtered_paths, "add")
 
@@ -239,17 +238,22 @@ class PokebookApp:
 
             self.detail_window.bind("<Escape>", lambda e: self.detail_window.destroy())
             self.detail_window.bind("<Escape>", lambda e: self.detail_window.destroy())
-
  
     def clear_grid(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
-
+    
     def _on_mousewheel(self, event):
         if event.num == 4 or event.delta > 0:
             self.canvas.yview_scroll(-1, "units")
         elif event.num == 5 or event.delta < 0:
             self.canvas.yview_scroll(1, "units")
+
+    def _bind_mousewheel(self):
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _unbind_mousewheel(self):
+        self.canvas.unbind_all("<MouseWheel>")
 
     def update_scrollregion(self, event):
         bbox = self.canvas.bbox("all")
@@ -269,73 +273,24 @@ class PokebookApp:
         else:
             self.counter_label.configure(text=f"{total_cards} Karten insgesamt, {user_cards} in Sammlung")
 
-    def export_collection_as_csv(self):
-        if not self.is_admin:
-            file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Dateien", "*.csv")],initialfile="Meine_Sammlung.csv")
-            data = db.get_user_img_details(self.user_id)
-        else:
-            file_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV Dateien", "*.csv")],initialfile="Komplette_Sammlung.csv")
-            data = db.get_all_img_details()
-
-        if not file_path:
-            return
-        
-        with open(file_path, mode='w', newline='', encoding='utf-8-sig') as file:
-            writer = csv.writer(file, delimiter=";")
-            writer.writerow(["Name", "Typ", "Seltenheit", "Päckchen"])
-            for bildname, typ, seltenheit, pack in data:
-                name_without_png = os.path.splitext(bildname)[0]
-                writer.writerow([name_without_png, typ, seltenheit, pack])
-
-    def export_collection_as_pdf(self):
-        if not self.is_admin:
-            file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Dateien", "*.pdf")], initialfile="Meine_Sammlung.pdf")
-            data = db.get_user_img_details(self.user_id)
-        else:
-            file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF Dateien", "*.pdf")], initialfile="Komplette_Sammlung.pdf")
-            data = db.get_all_img_details()
-
-        if not file_path:
-            return
-
-        c = canvas.Canvas(file_path, pagesize=A4)
-        width, height = A4
-        y = height - 50
-        c.setFont("Helvetica", 12)
-        if not self.is_admin:
-            c.drawString(50, y, f"Pokémon-Kartensammlung von {self.username}")
-        else:
-            c.drawString(50, y, f" Komplette Pokémon-Kartensammlung")
-        y -= 30
-        c.setFont("Helvetica", 10)
-
-        for bildname, typ, seltenheit, pack in data:
-            name_without_png = os.path.splitext(bildname)[0]
-            line = f"Name: {name_without_png} | Typ: {typ} | Seltenheit: {seltenheit} | Päckchen: {pack}"
-            c.drawString(50, y, line)
-            y -= 20
-            if y < 50:
-                c.showPage()
-                y = height - 50
-        c.save()
     def logout(self):
         for widget in self.root.winfo_children():
             widget.destroy()
         from login import LoginApp
         LoginApp(self.root)
 
+    # Hauptfenster
     def setup_ui(self):
+        # Menüleister
         menubar = ttk.Menu(self.root)
 
         file_menu = tk.Menu(menubar, tearoff=0)
-        file_menu.add_command(label="Exportieren als PDF", command=self.export_collection_as_pdf)
-        file_menu.add_command(label="Exportieren als CSV", command=self.export_collection_as_csv)
+        file_menu.add_command(label="Exportieren als PDF", command=lambda: export.export_collection_as_pdf(self))
+        file_menu.add_command(label="Exportieren als CSV", command=lambda: export.export_collection_as_csv(self))
         file_menu.add_separator()
         file_menu.add_command(label="Logout", command=self.logout)
 
         menubar.add_cascade(label="Menü", menu=file_menu)
-        self.root.config(menu=menubar)
-
 
         # Menüleiste setzen
         self.root.config(menu=menubar)
@@ -351,7 +306,7 @@ class PokebookApp:
                 text="Alle Karten", 
                 bootstyle="primary.Outline.TButton", 
                 width=11, 
-                command=lambda:[self.show_all_cards(), self.change_button_colour(self.all_cards_button, self.my_cards_button)])
+                command=lambda:[self.show_all_cards(), self.change_collection_button_colour(self.all_cards_button, self.my_cards_button)])
             self.all_cards_button.grid(row=0, column=0, sticky="e")
 
             # Meine Karten Button
@@ -360,7 +315,7 @@ class PokebookApp:
                 text="Meine Karten",
                 bootstyle="primary.Outline.TButton",
                 width=11,
-                command=lambda:[self.show_user_cards(), self.change_button_colour(self.my_cards_button, self.all_cards_button)])
+                command=lambda:[self.show_user_cards(), self.change_collection_button_colour(self.my_cards_button, self.all_cards_button)])
             self.my_cards_button.grid(row=0, column=1, sticky="w")
         else:
             self.admin_label = ttk.Label(self.menu_frame, text="Admin-Bereich", bootstyle="secondary", font=("Arial", 13, "bold") )
@@ -401,19 +356,6 @@ class PokebookApp:
         self.type_filter_combobox.grid(row=8, column=0, columnspan=2, pady=(5,10))
         self.type_filter_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
         self.type_filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
-        self.type_map = {
-            "Pflanze": 1, 
-            "Feuer": 2, 
-            "Wasser": 3, 
-            "Elektro": 4, 
-            "Psycho": 5, 
-            "Kampf": 6, 
-            "Finsternis": 7, 
-            "Metall": 8, 
-            "Fee": 9, 
-            "Drache": 10, 
-            "Farblos": 11
-            }
 
         # Seltenheit Combobox
         self.rarity_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Seltenheit:", font=("Arial", "11", "bold"))
@@ -428,7 +370,6 @@ class PokebookApp:
         self.rarity_filter_combobox.grid(row=10, column=0, columnspan=2, pady=(5,10))
         self.rarity_filter_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
         self.rarity_filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
-        self.rarity_map = {"Common": 1, "Uncommon": 2, "Rare": 3, "Double Rare": 4, "Ultra Rare": 5, "Art Rare": 6, "Special Art Rare": 7, "Secret Rare": 8}
 
         # Päckchen Combobox
         self.pack_filter_label = ttk.Label(self.menu_frame, bootstyle="primary", text="Päckchen:", font=("Arial", "11", "bold"))
@@ -443,7 +384,6 @@ class PokebookApp:
         self.pack_filter_combobox.grid(row=12, column=0, columnspan=2, pady=(5,10))
         self.pack_filter_combobox.bind("<Return>", lambda event: self.filter_cards(only_user_cards=self.only_user_cards))
         self.pack_filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.filter_cards(self.only_user_cards))
-        self.pack_map = {"Reisegefährten": 1, "Welten im Wandel": 2}
 
         # Reset Button
         self.reset_button = ttk.Button(self.menu_frame, bootstyle="primary", text="Reset", width=8, command=self.reset_filters)
@@ -486,29 +426,31 @@ class PokebookApp:
         self.scrollable_frame.columnconfigure(tuple(range(self.columns)), weight=1)
 
         # Mousewheel-Scrolling über das Canvas aktivieren
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel) 
+        self.canvas.bind("<Enter>", lambda e: self._bind_mousewheel())
+        self.canvas.bind("<Leave>", lambda e: self._unbind_mousewheel())
 
+    # Admin Features
     def select_image(self):
-        path = filedialog.askopenfilename(title="Bild auswählen", filetypes=[("Bilddateien", "*.png *.jpg *.jpeg *.gif")])
+        path = filedialog.askopenfilename(title="Bild auswählen", filetypes=[("Bilddateien", "*.png *.jpg *.jpeg *.webp")])
         if path:
             self.image_filename = path
-            messagebox.showinfo("Bild ausgewählt", os.path.basename(path))
+            messagebox.showinfo("Bild ausgewählt", f'"{os.path.basename(path)}" ausgewählt!')
     
-    def add_cards(self):
+    def add_card_admin(self):
         name = self.name_add_entry.get().strip()
-        typ_name = self.typ_combobox.get()
-        seltenheit_name = self.seltenheit_combobox.get()
+        type_name = self.type_add_combobox.get()
+        rarity_name = self.rarity_add_combobox.get()
         pack_name = self.pack_add_combobox.get()
 
-        if not all([name, typ_name, seltenheit_name, pack_name, self.image_filename]):
+        if not all([name, type_name, rarity_name, pack_name, self.image_filename]):
             messagebox.showerror("Fehler", "Bitte alle Felder ausfüllen und ein Bild auswählen.")
             return
 
-        typ_id = db.get_id("typ", typ_name)
-        seltenheit_id = db.get_id("seltenheit", seltenheit_name)
+        type_id = db.get_id("typ", type_name)
+        rarity_id = db.get_id("seltenheit", rarity_name)
         pack_id = db.get_id("paeckchen", pack_name)
 
-        if not all([typ_id, seltenheit_id, pack_id]):
+        if not all([type_id, rarity_id, pack_id]):
             messagebox.showerror("Fehler", "Ungültige Auswahl in den Drop-down-Feldern.")
             return
 
@@ -520,10 +462,16 @@ class PokebookApp:
             messagebox.showerror("Bildfehler", f"Bild konnte nicht kopiert werden: {e}")
             return
         
-        db.add_cards_to_db(messagebox, name, typ_id, seltenheit_id, pack_id, image_name)
-        self.clear_form()
+        db.add_new_card_admin(messagebox, name, type_id, rarity_id, pack_id, image_name)
+        self.clear_add_card_form()
+        self.refresh_grid()
     
-    def clear_form(self):
+    def refresh_grid(self):
+        self.all_img_paths = self.get_all_img_paths()
+        self.display_images(self.all_img_paths)
+        self.update_card_counter()
+    
+    def clear_add_card_form(self):
         self.name_add_entry.delete(0, 'end')
         self.typ_combobox.set('')
         self.seltenheit_combobox.set('')
@@ -531,23 +479,23 @@ class PokebookApp:
         self.image_filename = None
     
     def add_card_menu(self):
-        self.add_cards_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Karten hinzufügen", font=("Arial", 13, "bold"))
-        self.add_cards_label.grid(row=14, column=0, columnspan=2, pady=(5,0))
+        self.add_card_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Karten hinzufügen", font=("Arial", 13, "bold"))
+        self.add_card_label.grid(row=14, column=0, columnspan=2, pady=(5,0))
 
         self.name_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Name:", font=("Arial", 11, "bold"))
         self.name_add_label.grid(row=15, column=0, sticky="w", pady=5)
         self.name_add_entry = ttk.Entry(self.menu_frame, bootstyle="secondary", width=30)
         self.name_add_entry.grid(row=16, column=0, columnspan=2)
 
-        self.typ_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Typ:", font=("Arial", 11, "bold"))
-        self.typ_add_label.grid(row=17, column=0, sticky="w", pady=5)
-        self.typ_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=db.get_options("typ"))
-        self.typ_combobox.grid(row=18, column=0, columnspan=2, padx=5)
+        self.type_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Typ:", font=("Arial", 11, "bold"))
+        self.type_add_label.grid(row=17, column=0, sticky="w", pady=5)
+        self.type_add_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=db.get_options("typ"))
+        self.type_add_combobox.grid(row=18, column=0, columnspan=2, padx=5)
 
-        self.seltenheit_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Seltenheit", font=("Arial", 11, "bold"))
-        self.seltenheit_add_label.grid(row=19, column=0, sticky="w", pady=5)
-        self.seltenheit_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=db.get_options("seltenheit"))
-        self.seltenheit_combobox.grid(row=20, column=0, columnspan=2, padx=5)
+        self.rarity_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Seltenheit", font=("Arial", 11, "bold"))
+        self.rarity_add_label.grid(row=19, column=0, sticky="w", pady=5)
+        self.rarity_add_combobox = ttk.Combobox(self.menu_frame, width=28, state="readonly", values=db.get_options("seltenheit"))
+        self.rarity_add_combobox.grid(row=20, column=0, columnspan=2, padx=5)
 
         self.pack_add_label = ttk.Label(self.menu_frame, bootstyle="secondary", text="Päckchen", font=("Arial", 11, "bold"))
         self.pack_add_label.grid(row=21, column=0, sticky="w", pady=5)
@@ -557,9 +505,5 @@ class PokebookApp:
         self.upload_button = ttk.Button(self.menu_frame, bootstyle="secondary.Outline.TButton", text="Bild auswählen", command=self.select_image)
         self.upload_button.grid(row=23, column=0, columnspan=2, pady=(20,15))
 
-        self.add_button = ttk.Button(self.menu_frame, bootstyle="secondary", text="Karte hinzufügen", command=self.add_cards)
+        self.add_button = ttk.Button(self.menu_frame, bootstyle="secondary", text="Karte hinzufügen", command=self.add_card_admin)
         self.add_button.grid(row=24, column=0, columnspan=2, pady=10)        
-
-'''root = ttk.Window(themename="minty")
-PokebookApp(root, "user", 4, True)
-root.mainloop()'''
