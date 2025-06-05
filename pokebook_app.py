@@ -188,7 +188,9 @@ class PokebookApp:
                 db.new_User_card(self.user_id, self.card_id, messagebox, self.card_name)
                 self.user_img_paths = self.get_user_img_paths()  # Aktualisiere die Pfade
                 if self.only_user_cards:
-                    self.show_user_cards()  # Aktualisierte Sammlung anzeigen
+                    self.show_user_cards() 
+                else:
+                    self.show_all_cards()# Aktualisierte Sammlung anzeigen
 
         except Exception as e:
             messagebox.showerror("Fehler", f"Datenbankfehler:\n{str(e)}")
