@@ -187,7 +187,6 @@ class PokebookApp:
                 messagebox.showinfo("Hinweis", f"Karte '{self.card_name}' ist bereits in deiner Sammlung.")
             else:
                 db.new_User_card(self.user_id, self.card_id, messagebox, self.card_name)
-                messagebox.showinfo("Erfolg", f"Karte '{self.card_name}' wurde hinzugefügt!")
                 self.user_img_paths = self.get_user_img_paths()  # Aktualisiere die Pfade
                 if self.only_user_cards:
                     self.show_user_cards()  # Aktualisierte Sammlung anzeigen
