@@ -75,23 +75,32 @@ class PokebookApp:
         clicked_button.configure(bootstyle="primary")
         other_button.configure(bootstyle="primary.Outline.TButton")
 
-    def display_images(self, image_paths, str):
+    def display_images(self, image_paths, mode):
         self.clear_grid()
         self.card_images = []
-        CARD_WIDTH = 375
-        CARD_HEIGHT = round(CARD_WIDTH * 1.41)
+
+        container_width = self.canvas.winfo_width()
+        if container_width <= 1:  
+            self.root.update_idletasks()
+            container_width = self.canvas.winfo_width()
+
+        padding = 10
+        total_padding = (self.columns + 1) * padding
+        card_area_width = container_width - total_padding
+        card_width = max(100, card_area_width // self.columns)
+        card_height = round(card_width * 1.41)
+
         for index, path in enumerate(image_paths):
             try:
                 img = Image.open(path)
-                img = img.resize((CARD_WIDTH, CARD_HEIGHT))
+                img = img.resize((card_width, card_height))
                 photo = ImageTk.PhotoImage(img)
                 label = ttk.Label(self.scrollable_frame, image=photo)
                 label.image = photo
                 row = index // self.columns
                 col = index % self.columns
                 label.grid(row=row, column=col, padx=5, pady=5)
-                label.bind("<Button-1>", lambda e, path=path: self.show_card_details(path, str))
-
+                label.bind("<Button-1>", lambda e, path=path: self.show_card_details(path, mode))
             except Exception as e:
                 print(f"Fehler bei {path}: {e}")
         self.canvas.update_idletasks()
@@ -399,6 +408,9 @@ class PokebookApp:
         # Canvas für Scrollbar
         self.canvas = tk.Canvas(self.container)
         self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.canvas.bind("<Configure>", lambda e: self.display_images(self.user_img_paths if self.only_user_cards else self.all_img_paths,
+    "delete" if self.only_user_cards else "add"))
+
 
         # Scrollbar
         self.scrollbar = ttk.Scrollbar(self.container, bootstyle="primary-round", orient="vertical", command=self.canvas.yview)

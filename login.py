@@ -20,11 +20,12 @@ class LoginApp:
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        window_width = 500
-        window_height = 600
+        window_width = int(screen_width * 0.28)   
+        window_height = int(screen_height * 0.53)
         x = (screen_width - window_width) // 2
-        y = (screen_height - window_height) // 2
-        self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
+        y = (screen_height - window_height) // 2 - 60
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+
 
         # Icon
         try:
@@ -123,11 +124,11 @@ class LoginApp:
                 self.root.update_idletasks()
                 screen_width = self.root.winfo_screenwidth()
                 screen_height = self.root.winfo_screenheight()
-                window_width = screen_width - 20
-                window_height = screen_height - 120
-                x = (screen_width - window_width) // 2
-                y = (screen_height - window_height) // 2
-                self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")
+                window_width = int(screen_width * 0.99)   
+                window_height = int(screen_height * 0.9) 
+                y = (screen_height - window_height) // 2 - 60
+                self.root.geometry(f"{window_width}x{window_height}+{0 }+{y}")
+
 
             else:
                 messagebox.showerror("Fehler", "Falsches Passwort!")
