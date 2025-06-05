@@ -219,26 +219,6 @@ class PokebookApp:
             messagebox.showerror("Fehler", f"Datenbankfehler beim Löschen:\n{str(e)}")
 
 
-        # Funktion, die beim Klick aufgerufen wird
-        def add_card_to_collection():
-            # Karten-ID aus Datenbank holen
-            card_id = db.get_card_id_by_name(self.card_name)
-            if card_id is None:
-                messagebox.showerror("Fehler", "Karte nicht gefunden!")
-                return
-            # Karte in Sammlung einfügen
-            db.new_User_card(self.user_id, card_id, messagebox, self.card_name)
-            # Hier kannst du die Sammlung aktualisieren, falls du eine Methode hast:
-            self.user_img_paths = self.get_user_img_paths()  # Pfade neu laden
-            if self.only_user_cards:
-                self.show_user_cards()  # Aktualisierte Sammlung anzeigen
-            messagebox.showinfo("Erfolg", f"Karte '{self.card_name}' wurde hinzugefügt!")
-
-            self.add_button.config(command=add_card_to_collection)
-
-            self.detail_window.bind("<Escape>", lambda e: self.detail_window.destroy())
-            self.detail_window.bind("<Escape>", lambda e: self.detail_window.destroy())
- 
     def clear_grid(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
