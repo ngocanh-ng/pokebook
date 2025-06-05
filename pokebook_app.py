@@ -161,10 +161,10 @@ class PokebookApp:
             self.card_id = db.get_id("Karte", self.card_name)
 
             if mode == "add":
-                add_button = ttk.Button(self.detail_window, text="Hinzufügen", command=self.add_card)
+                add_button = ttk.Button(self.detail_window, text="Hinzufügen", command=lambda:[self.add_card(),self.detail_window.destroy()])
                 add_button.pack(pady=(20, 10), padx=20, fill='x')
             elif mode == "delete":
-                delete_button = ttk.Button(self.detail_window, text="Löschen", command=self.delete_card)
+                delete_button = ttk.Button(self.detail_window, text="Löschen", command=lambda:[self.delete_card(),self.detail_window.destroy()])
                 delete_button.pack(pady=(20, 10), padx=20, fill='x')
 
         except Exception as e:
