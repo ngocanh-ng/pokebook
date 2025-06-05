@@ -123,8 +123,8 @@ class LoginApp:
                 self.root.update_idletasks()
                 screen_width = self.root.winfo_screenwidth()
                 screen_height = self.root.winfo_screenheight()
-                window_width = 1910
-                window_height = 1070
+                window_width = 1890
+                window_height = 900
                 x = (screen_width - window_width) // 2
                 y = (screen_height - window_height) // 2
                 self.root.geometry(f"{window_width}x{window_height}+{x-10}+{y-60}")

@@ -16,9 +16,9 @@ ALLOWED_TABLES = {
 def connect_db():
     try:
         connection = mariadb.connect(
-            user=os.getenv("LOCAL_USER"),
-            password=os.getenv("LOCAL_PASSWORD"),
-            host=os.getenv("LOCAL_HOST"),
+            user=os.getenv("USER"),
+            password=os.getenv("PASSWORD"),
+            host=os.getenv("HOST"),
             port=3306,
             database="team02"
         )
@@ -154,7 +154,9 @@ def get_id(table, name):
         conn = connect_db()
         cur = conn.cursor()
 
-        cur.execute(f"SELECT {table.capitalize()}ID FROM {table} WHERE Name = ?", (name,))
+        name += ".png"
+
+        cur.execute(f"SELECT {table.capitalize()}ID FROM karte WHERE Bildname = ?", (name,))
         result = cur.fetchone()
         return result[0] if result else None
     
@@ -193,3 +195,33 @@ def add_cards_to_db(messagebox, name, typ_id, seltenheit_id, pack_id, image_name
         messagebox.showinfo("Erfolg", f"Karte '{name}' wurde hinzugefügt!")
     except Exception as e:
         messagebox.showerror("Datenbankfehler", str(e))
+
+def new_User_card(benutzerid, kartenid, messagebox, name):
+   
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO zuordnung_benutzer_karte (Benutzer, Karte, Anzahl) VALUES (?, ?, ?)",
+            (benutzerid, kartenid, 1)
+        )
+        conn.commit()
+        messagebox.showinfo("Erfolg", f"Karte '{name}' wurde hinzugefügt!")
+    except Exception as e:
+        messagebox.showerror("Datenbankfehler", str(e))
+
+def delete_user_card(benutzerid, kartenid, messagebox, name):
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM zuordnung_benutzer_karte WHERE Benutzer = ? AND Karte = ?",
+            (benutzerid, kartenid)
+        )
+        conn.commit()
+
+        messagebox.showinfo("Erfolg", f"Karte '{name}' wurde gelöscht!")
+    except Exception as e:
+        messagebox.showerror("Datenbankfehler", str(e))
+    finally:
+        conn.close()

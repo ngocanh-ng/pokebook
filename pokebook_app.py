@@ -8,7 +8,7 @@ from tkinter import filedialog, messagebox
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import shutil
-from Hinzufügen import open_add_card_window
+
 
 class PokebookApp:
     def __init__(self, root, username, user_id, is_admin=False):
@@ -18,6 +18,9 @@ class PokebookApp:
         self.is_admin = is_admin
         self.columns = 4
         self.root.title(f"Pokébook – {username}")
+
+        self.card_id = None
+        self.card_name = None
 
         # Button-Größe
         s = ttk.Style()
@@ -73,7 +76,7 @@ class PokebookApp:
         clicked_button.configure(bootstyle="primary")
         other_button.configure(bootstyle="primary.Outline.TButton")
 
-    def display_images(self, image_paths):
+    def display_images(self, image_paths, str):
         self.clear_grid()
         self.card_images = []
         CARD_WIDTH = 375
@@ -88,7 +91,7 @@ class PokebookApp:
                 row = index // self.columns
                 col = index % self.columns
                 label.grid(row=row, column=col, padx=5, pady=5)
-                label.bind("<Button-1>", lambda e, path=path: self.show_card_details(path))
+                label.bind("<Button-1>", lambda e, path=path: self.show_card_details(path, str))
 
             except Exception as e:
                 print(f"Fehler bei {path}: {e}")
@@ -97,12 +100,12 @@ class PokebookApp:
         
     def show_all_cards(self):
         self.only_user_cards = False
-        self.display_images(self.all_img_paths)
+        self.display_images(self.all_img_paths, "add")
         self.update_card_counter()
         
     def show_user_cards(self):
         self.only_user_cards = True
-        self.display_images(self.user_img_paths)
+        self.display_images(self.user_img_paths, "delete")
         self.update_card_counter()
     
     def filter_cards(self, only_user_cards):
@@ -126,7 +129,7 @@ class PokebookApp:
 
         base_path = os.getenv("PATH_ALL_CARDS")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
-        self.display_images(filtered_paths)
+        self.display_images(filtered_paths, "add")
 
     def reset_filters(self):
         self.type_filter_combobox.set("")
@@ -140,28 +143,105 @@ class PokebookApp:
         else:
             self.show_all_cards()
     
-    def show_card_details(self, image_path: str):
-        detail_window = tk.Toplevel(self.root)
-        detail_window.title("Kartendetails")
-
-        detail_window.geometry("400x600")
-        detail_window.resizable(False, False)
+    def show_card_details(self, image_path: str, mode="add"):
+        self.detail_window = tk.Toplevel(self.root)
+        self.detail_window.title("Kartendetails")
+        self.detail_window.geometry("400x600")
+        self.detail_window.resizable(False, False)
 
         try:
             img = Image.open(image_path)
-            img = img.resize((360, 510))  #
+            img = img.resize((360, 510))
             photo = ImageTk.PhotoImage(img)
 
-            label = ttk.Label(detail_window, image=photo)
-            label.image = photo 
-            label.pack(padx=20, pady=20)
+            label = ttk.Label(self.detail_window, image=photo)
+            label.image = photo
+            label.pack(pady=5, padx=5)
+
+            self.card_name = os.path.splitext(os.path.basename(image_path))[0]
+            self.card_id = db.get_id("Karte", self.card_name)
+
+            if mode == "add":
+                add_button = ttk.Button(self.detail_window, text="Hinzufügen", command=self.add_card)
+                add_button.pack(pady=(20, 10), padx=20, fill='x')
+            elif mode == "delete":
+                delete_button = ttk.Button(self.detail_window, text="Löschen", command=self.delete_card)
+                delete_button.pack(pady=(20, 10), padx=20, fill='x')
 
         except Exception as e:
-            error_label = ttk.Label(detail_window, text=f"Fehler: {e}", bootstyle="danger")
+            error_label = ttk.Label(self.detail_window, text=f"Fehler: {e}", bootstyle="danger")
             error_label.pack(padx=20, pady=20)
-        
-        detail_window.bind("<Escape>", lambda e: detail_window.destroy())
 
+
+    def add_card(self): #, card_id, card_name
+        try:
+            cur = db.connect_db().cursor()  # Stelle sicher, dass du die Verbindung hierher bekommst
+
+            # Prüfen, ob die Karte bereits vorhanden ist
+            cur.execute(
+                "SELECT 1 FROM zuordnung_benutzer_karte WHERE Benutzer = ? AND Karte = ?",
+                (self.user_id, self.card_id)
+            )
+            result = cur.fetchone()
+            if result:
+                messagebox.showinfo("Hinweis", f"Karte '{self.card_name}' ist bereits in deiner Sammlung.")
+            else:
+                db.new_User_card(self.user_id, self.card_id, messagebox, self.card_name)
+                messagebox.showinfo("Erfolg", f"Karte '{self.card_name}' wurde hinzugefügt!")
+                self.user_img_paths = self.get_user_img_paths()  # Aktualisiere die Pfade
+                if self.only_user_cards:
+                    self.show_user_cards()  # Aktualisierte Sammlung anzeigen
+
+        except Exception as e:
+            messagebox.showerror("Fehler", f"Datenbankfehler:\n{str(e)}")
+
+    def delete_card(self):
+        try:
+            conn = db.connect_db()
+            cur = conn.cursor()
+            print(1)
+            cur.execute(
+                "DELETE FROM zuordnung_benutzer_karte WHERE Benutzer = ? AND Karte = ?",
+                (self.user_id, self.card_id)
+            )
+            print(2)
+            conn.commit()
+            messagebox.showinfo("Erfolg", f"Karte '{self.card_name}' wurde gelöscht!")
+            
+            # Sammlung aktualisieren
+            self.user_img_paths = self.get_user_img_paths()
+            if self.only_user_cards:
+                self.show_user_cards()
+
+            cur.close()
+            conn.close()
+
+        except Exception as e:
+            print(e)
+            messagebox.showerror("Fehler", f"Datenbankfehler beim Löschen:\n{str(e)}")
+
+
+        # Funktion, die beim Klick aufgerufen wird
+        def add_card_to_collection():
+            # Karten-ID aus Datenbank holen
+            card_id = db.get_card_id_by_name(self.card_name)
+            if card_id is None:
+                messagebox.showerror("Fehler", "Karte nicht gefunden!")
+                return
+            # Karte in Sammlung einfügen
+            db.new_User_card(self.user_id, card_id, messagebox, self.card_name)
+            # Hier kannst du die Sammlung aktualisieren, falls du eine Methode hast:
+            self.user_img_paths = self.get_user_img_paths()  # Pfade neu laden
+            if self.only_user_cards:
+                self.show_user_cards()  # Aktualisierte Sammlung anzeigen
+            messagebox.showinfo("Erfolg", f"Karte '{self.card_name}' wurde hinzugefügt!")
+
+            self.add_button.config(command=add_card_to_collection)
+
+            self.detail_window.bind("<Escape>", lambda e: self.detail_window.destroy())
+            self.detail_window.bind("<Escape>", lambda e: self.detail_window.destroy())
+
+ 
     def clear_grid(self):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
