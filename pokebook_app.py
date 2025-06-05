@@ -145,8 +145,16 @@ class PokebookApp:
     def show_card_details(self, image_path: str, mode="add"):
         self.detail_window = tk.Toplevel(self.root)
         self.detail_window.title("Kartendetails")
-        self.detail_window.geometry("400x600")
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = 400
+        window_height = 600
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.detail_window.geometry(f"{window_width}x{window_height}+{x}+{y}")
         self.detail_window.resizable(False, False)
+
+   
 
         try:
             img = Image.open(image_path)
