@@ -8,6 +8,8 @@ from tkinter import filedialog, messagebox
 import export
 from constants import TYPE_MAP, RARITY_MAP, PACK_MAP
 import shutil
+import sys
+
 
 class PokebookApp:
     def __init__(self, root, username, user_id, is_admin=False):
@@ -61,13 +63,17 @@ class PokebookApp:
             self.counter_label.configure(bootstyle="secondary")
             self.add_card_menu()
 
+    def resource_path(relative_path):
+        base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+        return os.path.join(base_path, relative_path)
+
     def get_all_img_paths(self):
-        base_path = ("assets/Karten_Bilder")
+        base_path =  self.resource_path("assets/Karten_Bilder")
         all_img_names = db.get_all_img_names()
         return [os.path.join(base_path, name) for name in all_img_names]
 
     def get_user_img_paths(self):
-        base_path = ("assets/Karten_Bilder")
+        base_path = self.resource_path("assets/Karten_Bilder")
         user_img_names = db.get_user_img_names(self.user_id)
         return [os.path.join(base_path, name) for name in user_img_names]
     
@@ -135,7 +141,7 @@ class PokebookApp:
         else:
             img_names = db.get_filtered_img_names(name=name, typ=typ, rarity=rarity, pack=pack, only_user_cards=False, sort_by=sort_crit)
 
-        base_path = ("assets/Karten_Bilder")
+        base_path = self.resource_path("assets/Karten_Bilder")
         filtered_paths = [os.path.join(base_path, name) for name in img_names]
         self.display_images(filtered_paths, "add")
 
