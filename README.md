@@ -11,3 +11,8 @@ Neue Karte hinzufügen\
 Alle Karten anzeigen\
 Suche nach Name\
 Filter nach Typ
+
+# C-Sharp Reflexion
+Was hat gut funktioniert? - Anbindung an die Datenbank und Datenabfrage
+Was lief stockend? - Ansicht aller Karten benötigt neue Tools (flowLayoutPanel, PictureBox); viele Methoden; neue Begriffe (DataTable, using, new)
+Welche Unterschiede sind Ihnen zwischen Python und C# aufgefallen? - strengere, ausführlichere Syntax; Struktur ist unübersichtlicher als Python
