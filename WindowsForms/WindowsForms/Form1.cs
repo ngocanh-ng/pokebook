@@ -25,11 +25,11 @@ namespace WindowsForms
             ShowAllCardImages();
         }
 
-        private string imagesFolderPath = @"C:\Users\Ngoc Anh\source\repos\pokebook\assets\Karten_Bilder"; 
+        private string imagesFolderPath = @"C:\Users\Ngoc Anh\source\repos\pokebook\assets\Karten_Bilder";
 
-        private void ShowAllCardImages()
+        private void ShowAllCardImages(string nameFilter = null)
         {
-            DataTable cards = GetAllCardImageNamesFromDB();
+            DataTable cards = GetCardImageNamesFromDB(nameFilter);
 
             flowLayoutPanelCards.Controls.Clear();
 
@@ -55,6 +55,7 @@ namespace WindowsForms
                 flowLayoutPanelCards.Controls.Add(pic);
             }
         }
+
 
         private DataTable GetAllCardImageNamesFromDB()
         {
@@ -82,8 +83,52 @@ namespace WindowsForms
 
             return dt;
         }
+        private DataTable GetCardImageNamesFromDB(string nameFilter = null)
+        {
+            string connStr = "server=127.0.0.1;database=team02;uid=na_ng;pwd=botanical;";
+            string query = "SELECT DISTINCT Bildname FROM karte";
 
+            if (!string.IsNullOrEmpty(nameFilter))
+            {
+                query += " WHERE Name LIKE @nameFilter";
+            }
 
+            query += " ORDER BY Bildname ASC";
+
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connStr))
+                {
+                    conn.Open();
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        if (!string.IsNullOrEmpty(nameFilter))
+                        {
+                            cmd.Parameters.AddWithValue("@nameFilter", nameFilter + "%");
+                        }
+
+                        using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
+                        {
+                            adapter.Fill(dt);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("DB Fehler: " + ex.Message);
+            }
+
+            return dt;
+        }
+
+        private void tb_name_TextChanged(object sender, EventArgs e)
+        {
+            string searchTerm = tb_name.Text.Trim();
+            ShowAllCardImages(searchTerm);
+        }
     }
 
 }
